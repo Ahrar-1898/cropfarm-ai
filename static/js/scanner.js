@@ -2,6 +2,8 @@
     const cropInput = document.getElementById("cropImage");
     const cameraInput = document.getElementById("cameraCaptureInput");
     const preview = document.getElementById("imagePreview");
+    const uploadPlaceholder = document.getElementById("uploadPlaceholder");
+    const uploadStatus = document.getElementById("imageUploadStatus");
     const removeButton = document.getElementById("removeImage");
     const dropZone = document.getElementById("dropZone");
     const form = document.getElementById("scannerForm");
@@ -17,6 +19,9 @@
     const useButton = document.getElementById("usePhotoButton");
     const closeButton = document.getElementById("cameraCloseButton");
     const analyzeLabel = document.getElementById("analyzeLabel");
+    const analyzeButton = document.getElementById("analyzeButton");
+    const analyzeSpinner = document.getElementById("analyzeSpinner");
+    const loadingStatus = document.getElementById("scannerLoading");
     if (!cropInput || !form) {
         return;
     }
@@ -25,6 +30,7 @@
     let previewUrl = null;
     let capturePreviewUrl = null;
     let capturedFile = null;
+    let isSubmitting = false;
 
     const clearError = () => {
         errorMessage.textContent = "";
@@ -43,6 +49,20 @@
             URL.revokeObjectURL(capturePreviewUrl);
             capturePreviewUrl = null;
         }
+    };
+    const clearSelection = () => {
+        cropInput.value = "";
+        if (cameraInput) {
+            cameraInput.value = "";
+        }
+        releasePreviewUrl();
+        preview.hidden = true;
+        preview.removeAttribute("src");
+        uploadPlaceholder.hidden = false;
+        uploadStatus.hidden = true;
+        removeButton.hidden = true;
+        dropZone.classList.remove("drop-zone-has-image");
+        capturedFile = null;
     };
     const stopCamera = () => {
         cameraStream?.getTracks().forEach((track) => track.stop());
@@ -70,13 +90,11 @@
         if (!file) {
             return false;
         }
-        const validType = ["image/jpeg", "image/png", "image/webp"].includes(file.type);
-        if (!validType || file.size > 10 * 1024 * 1024) {
+        const validType = ["image/jpeg", "image/png", "image/webp"].includes(file.type.toLowerCase());
+        const validExtension = /\.(jpe?g|png|webp)$/i.test(file.name);
+        if ((!validType && !validExtension) || !file.size || file.size > 10 * 1024 * 1024) {
+            clearSelection();
             showError(form.dataset.fileError);
-            cropInput.value = "";
-            if (cameraInput) {
-                cameraInput.value = "";
-            }
             return false;
         }
 
@@ -85,7 +103,10 @@
         previewUrl = URL.createObjectURL(file);
         preview.src = previewUrl;
         preview.hidden = false;
+        uploadPlaceholder.hidden = true;
+        uploadStatus.hidden = false;
         removeButton.hidden = false;
+        dropZone.classList.add("drop-zone-has-image");
         return true;
     };
     const openFallbackCamera = () => {
@@ -112,14 +133,7 @@
         }
     });
     removeButton?.addEventListener("click", () => {
-        cropInput.value = "";
-        if (cameraInput) {
-            cameraInput.value = "";
-        }
-        releasePreviewUrl();
-        preview.hidden = true;
-        preview.removeAttribute("src");
-        removeButton.hidden = true;
+        clearSelection();
         clearError();
     });
 
@@ -237,9 +251,35 @@
     });
     cameraDialog?.addEventListener("cancel", stopCamera);
 
-    form.addEventListener("submit", () => {
+    form.addEventListener("submit", (event) => {
+        if (isSubmitting) {
+            event.preventDefault();
+            return;
+        }
+        if (!cropInput.files.length) {
+            event.preventDefault();
+            showError(form.dataset.imageRequired);
+            galleryButton?.focus();
+            return;
+        }
+        isSubmitting = true;
+        clearError();
+        analyzeButton.disabled = true;
+        galleryButton.disabled = true;
+        cameraButton.disabled = true;
+        form.setAttribute("aria-busy", "true");
+        loadingStatus.hidden = false;
+        analyzeSpinner.hidden = false;
         analyzeLabel.textContent = form.dataset.analyzingLabel;
     });
+    const analysisResult = document.getElementById("analysisResult");
+    if (analysisResult) {
+        const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+            ? "auto"
+            : "smooth";
+        analysisResult.scrollIntoView({ behavior, block: "start" });
+        analysisResult.focus({ preventScroll: true });
+    }
     window.addEventListener("pagehide", () => {
         stopCamera();
         releasePreviewUrl();

@@ -1,4 +1,28 @@
 (() => {
+    const dashboardGreeting = document.getElementById("dashboardGreeting");
+    if (dashboardGreeting) {
+        const updateGreeting = () => {
+            const hour = new Date().getHours();
+            const period = hour >= 5 && hour < 12
+                ? "morning"
+                : hour < 17 && hour >= 12
+                    ? "afternoon"
+                    : hour < 21 && hour >= 17
+                        ? "evening"
+                        : "night";
+            dashboardGreeting.textContent = dashboardGreeting.dataset[period];
+        };
+
+        updateGreeting();
+        window.setInterval(updateGreeting, 30_000);
+        window.addEventListener("focus", updateGreeting);
+        document.addEventListener("visibilitychange", () => {
+            if (!document.hidden) {
+                updateGreeting();
+            }
+        });
+    }
+
     const sidebar = document.getElementById("workspaceSidebar");
     const menuToggle = document.getElementById("menuToggle");
     const closeSidebar = () => {

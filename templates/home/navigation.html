@@ -5,24 +5,27 @@
             <span class="welcome-brand-name">CropFarm<span>AI</span><small>SMART AGRICULTURE</small></span>
         </a>
         <div class="welcome-header-actions">
-            <button class="welcome-language-trigger" type="button" id="openLanguageDialog">
-                <span aria-hidden="true">文</span>{{ t.language }}<span aria-hidden="true">⌄</span>
-            </button>
             <button class="home-menu-toggle" id="homeMenuToggle" type="button"
                     aria-label="Open navigation" aria-expanded="false" aria-controls="welcomeNav">☰</button>
         </div>
     </div>
     <nav class="welcome-nav" id="welcomeNav" aria-label="Main navigation">
-        <a href="#home" data-home-nav>Home</a>
-        <a href="#services" data-home-nav>Services</a>
-        <a href="#about" data-home-nav>About Us</a>
-        <a href="#contact" data-home-nav>Contact Us</a>
-        <span class="welcome-nav-spacer" aria-hidden="true"></span>
-        {% if current_user.is_authenticated %}
-            <a class="welcome-nav-primary" href="{{ url_for('dashboard') }}">Open my workspace</a>
-        {% else %}
-            <a class="welcome-nav-login" href="{{ url_for('login') }}">Sign In</a>
-            <a class="welcome-nav-primary" href="{{ url_for('register') }}">Create Account</a>
-        {% endif %}
+        <div class="welcome-nav-links">
+            <a href="#home" data-home-nav>Home</a>
+            <a href="#services" data-home-nav>Services</a>
+            <a href="#about" data-home-nav>About Us</a>
+            <a href="#contact" data-home-nav>Contact Us</a>
+        </div>
+        <div class="welcome-nav-actions">
+            <button class="welcome-language-trigger" type="button" id="openLanguageDialog">
+                {{ t.language }}<span aria-hidden="true">⌄</span>
+            </button>
+            {% if current_user.is_authenticated %}
+                <a class="welcome-nav-primary" href="{{ url_for('dashboard') }}">Open my workspace</a>
+            {% else %}
+                <a class="welcome-nav-login" href="{{ url_for('login') }}">Sign In</a>
+                <a class="welcome-nav-primary" href="{{ url_for('register') }}">Create Account</a>
+            {% endif %}
+        </div>
     </nav>
 </header>

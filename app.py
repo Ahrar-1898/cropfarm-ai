@@ -246,7 +246,7 @@ def create_app(test_config=None):
         response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
         response.headers.setdefault(
             "Content-Security-Policy",
-            "default-src 'self'; img-src 'self' data: https://images.unsplash.com; "
+            "default-src 'self'; img-src 'self' data: blob: https://images.unsplash.com; "
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
             "font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; "
             "connect-src 'self'; media-src 'self' https:; "
@@ -978,6 +978,7 @@ def create_app(test_config=None):
                 if predicted_disease.startswith("Pepper__bell")
                 else predicted_disease.split("_", 1)[0]
             )
+            is_healthy_prediction = predicted_disease.lower().endswith("healthy")
             detection = DiseaseDetection(
                 unique_detection_id=detection_id,
                 user_id=current_user.id,
@@ -1033,6 +1034,15 @@ def create_app(test_config=None):
                 "detection": detection,
                 "disease_name": disease_name,
                 "details": details,
+                "predicted_crop_name": inferred_crop,
+                "plant_health_status": TRANSLATIONS.get(
+                    current_user.language, TRANSLATIONS["en"]
+                )[
+                    "scanner_health_healthy"
+                    if is_healthy_prediction
+                    else "scanner_health_non_healthy"
+                ],
+                "is_healthy_prediction": is_healthy_prediction,
                 "image_url": url_for(
                     "uploaded_image", filename=relative_image_path
                 ),

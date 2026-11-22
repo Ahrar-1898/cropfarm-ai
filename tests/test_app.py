@@ -314,7 +314,54 @@ class CropFarmAppTests(unittest.TestCase):
             with self.subTest(path=path):
                 response = self.client.get(path)
                 self.assertEqual(response.status_code, 200)
+        scanner_page = self.client.get("/scanner")
+        drop_zone = scanner_page.data.split(b'id="dropZone"', 1)[1].split(
+            b"</label>", 1
+        )[0]
+        self.assertIn(b'id="imagePreview"', drop_zone)
+        self.assertIn(b'id="scannerLoading"', scanner_page.data)
+        self.assertIn(
+            "img-src 'self' data: blob:",
+            scanner_page.headers["Content-Security-Policy"],
+        )
         self.assertEqual(self.client.get("/admin").status_code, 403)
+
+    def test_scanner_submission_without_image_shows_validation_message(self):
+        with self.application.app_context():
+            self.create_user()
+        self.sign_in()
+
+        response = self.client.post(
+            "/scanner", data={}, content_type="multipart/form-data"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Choose a crop image to analyze.", response.data)
+
+    def test_dashboard_greeting_uses_time_labels_without_user_name(self):
+        with self.application.app_context():
+            self.create_user()
+        self.sign_in()
+
+        response = self.client.get("/dashboard")
+        greeting_markup = response.data.split(
+            b'id="dashboardGreeting"', 1
+        )[1].split(b"</h1>", 1)[0]
+
+        self.assertNotIn(b"Test", greeting_markup)
+        for period, greeting in (
+            ("morning", "Good Morning!"),
+            ("afternoon", "Good Afternoon!"),
+            ("evening", "Good Evening!"),
+            ("night", "Good Night!"),
+        ):
+            self.assertIn(
+                f'data-{period}="{greeting}"'.encode(), response.data
+            )
+        self.assertIn(
+            "Here’s the activity in your CropFarmAI workspace.".encode(),
+            response.data,
+        )
 
     def test_theme_preference_persists_and_workspace_shows_one_notification_link(self):
         with self.application.app_context():
@@ -382,9 +429,25 @@ class CropFarmAppTests(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"ANALYSIS COMPLETE", response.data)
+        self.assertIn(b"Disease detection overview", response.data)
+        self.assertIn(b"Prediction confidence", response.data)
+        self.assertIn(b"Possible causes", response.data)
+        self.assertIn(b"Information not available", response.data)
         with self.application.app_context():
             detection = DiseaseDetection.query.filter_by(user_id=owner_id).one()
             self.assertIn(detection.predicted_disease, cropfarm_app.class_names.values())
+            expected_health_status = (
+                b"Healthy class predicted"
+                if detection.predicted_disease.lower().endswith("healthy")
+                else b"Non-healthy class predicted"
+            )
+            expected_health_dot = (
+                b'class="health-dot health-good"'
+                if detection.predicted_disease.lower().endswith("healthy")
+                else b'class="health-dot health-risk"'
+            )
+            self.assertIn(expected_health_status, response.data)
+            self.assertIn(expected_health_dot, response.data)
             self.assertGreaterEqual(detection.confidence_score, 0)
             self.assertLessEqual(detection.confidence_score, 100)
             self.assertEqual(len(detection.images), 1)

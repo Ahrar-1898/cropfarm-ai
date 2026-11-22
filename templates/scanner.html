@@ -13,6 +13,7 @@
               data-camera-unavailable="{{ t.scanner_camera_unavailable }}"
               data-camera-error="{{ t.scanner_camera_error }}"
               data-camera-capture-error="{{ t.scanner_camera_capture_error }}"
+              data-image-required="{{ t.scanner_image_required }}"
               data-analyzing-label="{{ t.scanner_analyzing_image }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="scanner-source-buttons" role="group" aria-label="{{ t.scanner_source_label }}">
@@ -21,12 +22,17 @@
                         aria-haspopup="dialog" aria-controls="cameraDialog">{{ t.scanner_camera }}</button>
             </div>
             <label for="cropImage" class="drop-zone" id="dropZone">
-                <input type="file" name="crop_image" id="cropImage" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" aria-label="{{ t.scanner_gallery }}" required>
-                <span class="upload-symbol">↑</span><strong>{{ t.scanner_drop_photo }}</strong><span>{{ t.scanner_or_browse }} <u>{{ t.scanner_browse }}</u></span><small>{{ t.scanner_file_types }}</small>
+                <input type="file" name="crop_image" id="cropImage" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" aria-label="{{ t.scanner_gallery }}">
+                <div class="upload-placeholder" id="uploadPlaceholder">
+                    <span class="upload-symbol">↑</span><strong>{{ t.scanner_drop_photo }}</strong><span>{{ t.scanner_or_browse }} <u>{{ t.scanner_browse }}</u></span><small>{{ t.scanner_file_types }}</small>
+                </div>
+                <img id="imagePreview" class="image-preview" alt="{{ t.scanner_preview_alt }}" hidden>
             </label>
             <input type="file" id="cameraCaptureInput" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" capture="environment" hidden>
             <p class="scanner-error" id="scannerError" role="alert" hidden></p>
-            <img id="imagePreview" class="image-preview" alt="{{ t.scanner_preview_alt }}" hidden>
+            <p class="upload-success" id="imageUploadStatus" role="status" aria-live="polite" hidden>
+                <span aria-hidden="true">✓</span>{{ t.scanner_image_uploaded }}
+            </p>
             <button class="button-link remove-image" id="removeImage" type="button" hidden>{{ t.scanner_remove_image }}</button>
             <div class="form-row">
                 <label>{{ t.scanner_link_farm }} <span class="optional">({{ t.scanner_optional }})</span><select name="farm_id"><option value="">{{ t.scanner_no_farm }}</option>{% for farm in farms %}<option value="{{ farm.id }}">{{ farm.farm_name }}</option>{% endfor %}</select></label>
@@ -35,7 +41,12 @@
             <div class="form-row">
                 <label>{{ t.scanner_link_crop }} <span class="optional">({{ t.scanner_optional }})</span><select name="crop_id"><option value="">{{ t.scanner_no_crop }}</option>{% for crop in crops %}<option value="{{ crop.id }}">{{ crop.crop_name }}{% if crop.farm %} · {{ crop.farm.farm_name }}{% endif %}</option>{% endfor %}</select></label>
             </div>
-            <button class="button button-primary button-wide" type="submit" {% if not model_available %}disabled{% endif %}><span id="analyzeLabel">{{ t.scanner_analyze_image }}</span><span>→</span></button>
+            <p class="scanner-loading" id="scannerLoading" role="status" aria-live="polite" hidden>{{ t.scanner_analyzing_image }}</p>
+            <button class="button button-primary button-wide" id="analyzeButton" type="submit" {% if not model_available %}disabled{% endif %}>
+                <span id="analyzeLabel">{{ t.scanner_analyze_image }}</span>
+                <span class="scanner-spinner" id="analyzeSpinner" aria-hidden="true" hidden></span>
+                <span aria-hidden="true">→</span>
+            </button>
         </form>
         <div class="privacy-note"><span>▣</span><p>{{ t.scanner_privacy_note }}</p></div>
     </article>
@@ -59,25 +70,32 @@
     </div>
 </dialog>
 {% if result %}
-<section class="result-section" id="analysisResult">
-    <div class="result-header"><div><span class="eyebrow">ANALYSIS COMPLETE</span><h2>Your scan result</h2></div><a class="button button-outline button-small" href="{{ url_for('download_report', detection_id=result.detection.unique_detection_id) }}">↓ Download report</a></div>
+<section class="result-section" id="analysisResult" tabindex="-1">
+    <div class="result-header"><div><span class="eyebrow">{{ t.scanner_analysis_complete }}</span><h2>{{ t.scanner_result_heading }}</h2></div><a class="button button-outline button-small" href="{{ url_for('download_report', detection_id=result.detection.unique_detection_id) }}">↓ {{ t.scanner_download_report }}</a></div>
     <div class="result-layout">
-        <article class="panel result-image-panel"><img src="{{ result.image_url }}" alt="Uploaded crop leaf"><div class="image-caption"><span class="health-dot health-good"></span><span>Original uploaded image</span></div></article>
+        <article class="panel result-image-panel"><img src="{{ result.image_url }}" alt="{{ t.scanner_uploaded_image }}"><div class="image-caption"><span class="health-dot {{ 'health-good' if result.is_healthy_prediction else 'health-risk' }}"></span><span>{{ t.scanner_uploaded_image }}</span></div></article>
         <article class="panel diagnosis-panel">
-            <div class="diagnosis-top"><span class="eyebrow">MODEL PREDICTION</span><span class="status-chip">AI result · review carefully</span></div>
-            <h2>{{ result.disease_name }}</h2><p class="diagnosis-crop">Crop category · {{ result.detection.crop_name }}</p>
-            <div class="confidence-heading"><span>Model confidence</span><strong>{{ '%.2f'|format(result.detection.confidence_score) }}%</strong></div>
+            <div class="diagnosis-top"><span class="eyebrow">{{ t.scanner_model_prediction }}</span><span class="status-chip">{{ t.scanner_result_review }}</span></div>
+            <h2>{{ result.disease_name }}</h2>
+            <div class="diagnosis-overview-grid">
+                <div><span class="eyebrow">{{ t.scanner_predicted_crop }}</span><strong>{{ result.predicted_crop_name }}</strong></div>
+                <div><span class="eyebrow">{{ t.scanner_disease_category }}</span><strong>{{ result.details.get('category') or t.scanner_information_unavailable }}</strong></div>
+                <div><span class="eyebrow">{{ t.scanner_plant_health_status }}</span><strong>{{ result.plant_health_status }}</strong></div>
+            </div>
+            <div class="confidence-heading"><span>{{ t.scanner_prediction_confidence }}</span><strong>{{ '%.2f'|format(result.detection.confidence_score) }}%</strong></div>
             <div class="confidence-track"><span style="width: {{ [result.detection.confidence_score, 100]|min }}%"></span></div>
             <div class="result-detail-grid">
-                <section><span class="eyebrow">ABOUT THIS CLASS</span><p>{{ result.details.get('description', 'Disease information is not available for this class.') }}</p></section>
-                <section><span class="eyebrow">SYMPTOMS TO CHECK</span><p>{{ result.details.get('symptoms', 'No symptom information is available for this class.') }}</p></section>
-                <section><span class="eyebrow">TREATMENT GUIDANCE</span><p>{{ result.details.get('treatment', 'Consult a local agricultural expert for treatment guidance.') }}</p></section>
-                <section><span class="eyebrow">PREVENTION</span><p>{{ result.details.get('prevention', 'Follow local crop-health guidance and monitor the plant.') }}</p></section>
-                {% if result.details.get('organic_treatment') %}<section><span class="eyebrow">ORGANIC GUIDANCE</span><p>{{ result.details.organic_treatment }}</p></section>{% endif %}
-                {% if result.details.get('chemical_treatment') %}<section><span class="eyebrow">CHEMICAL GUIDANCE</span><p>{{ result.details.chemical_treatment }}</p></section>{% endif %}
+                <section><span class="eyebrow">{{ t.scanner_disease_description }}</span><p>{{ result.details.get('description') or t.scanner_information_unavailable }}</p></section>
+                <section><span class="eyebrow">{{ t.scanner_visible_symptoms }}</span><ul class="result-list"><li>{{ result.details.get('symptoms') or t.scanner_information_unavailable }}</li></ul></section>
+                <section><span class="eyebrow">{{ t.scanner_possible_causes }}</span><ul class="result-list"><li>{{ result.details.get('possible_causes') or result.details.get('causes') or result.details.get('cause') or t.scanner_information_unavailable }}</li></ul></section>
+                <section><span class="eyebrow">{{ t.scanner_recommended_treatment }}</span><ul class="result-list"><li>{{ result.details.get('treatment') or t.scanner_information_unavailable }}</li></ul></section>
+                <section><span class="eyebrow">{{ t.scanner_prevention_tips }}</span><ul class="result-list"><li>{{ result.details.get('prevention') or t.scanner_information_unavailable }}</li></ul></section>
+                <section><span class="eyebrow">{{ t.scanner_final_recommendation }}</span><p>{{ result.details.get('recovery') or t.scanner_information_unavailable }}</p></section>
+                {% if result.details.get('organic_treatment') %}<section><span class="eyebrow">{{ t.scanner_organic_guidance }}</span><p>{{ result.details.organic_treatment }}</p></section>{% endif %}
+                {% if result.details.get('chemical_treatment') %}<section><span class="eyebrow">{{ t.scanner_chemical_guidance }}</span><p>{{ result.details.chemical_treatment }}</p></section>{% endif %}
             </div>
-            <p class="advisory-note">This model prediction is not a confirmed diagnosis. Verify the symptoms and consult an agricultural expert before applying any treatment.</p>
-            <a class="text-link" href="{{ url_for('detection_detail', detection_id=result.detection.unique_detection_id) }}">Open saved detection <span>→</span></a>
+            <p class="advisory-note">{{ t.scanner_result_advisory }}</p>
+            <a class="text-link" href="{{ url_for('detection_detail', detection_id=result.detection.unique_detection_id) }}">{{ t.scanner_open_saved_detection }} <span>→</span></a>
         </article>
     </div>
 </section>
