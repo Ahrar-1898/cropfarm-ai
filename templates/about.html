@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}About CropFarmAI{% endblock %}
+{% block content %}
+<header class="site-header"><a class="brand" href="{{ url_for('home') }}"><span class="brand-mark">C</span><span>CropFarm<span class="brand-accent">AI</span></span></a><a class="button button-outline button-small" href="{{ url_for('home') }}">← Back home</a></header>
+<main class="about-page"><span class="eyebrow">ABOUT CROPFARMAI</span><h1>Technology meets<br><span>the work of growing.</span></h1><p>CropFarmAI is an agriculture-focused project that combines an existing image classifier and crop guidance with a practical place to organize farm, field, crop, and observation records.</p><div class="notice notice-info"><strong>Designed to support farmer judgement</strong><span>Model outputs can be wrong and do not replace local expertise or an in-person assessment.</span></div><a class="button button-primary" href="{{ url_for('register') }}">Create your workspace <span>→</span></a></main>
+{% endblock %}

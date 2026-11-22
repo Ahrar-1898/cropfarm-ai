@@ -1,0 +1,35 @@
+<section class="welcome-hero" id="home" aria-labelledby="welcomeTitle">
+    <img class="welcome-background-image"
+         src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=2400&q=90"
+         alt="" aria-hidden="true">
+    <video class="welcome-background-video" id="welcomeBackgroundVideo" playsinline
+           aria-hidden="true" hidden></video>
+    <div class="welcome-embed" id="welcomeEmbed" aria-hidden="true"></div>
+    <div class="welcome-scrim" aria-hidden="true"></div>
+    <div class="welcome-content" dir="{{ current_language_direction }}">
+        <span class="welcome-eyebrow"><span aria-hidden="true">✦</span>{{ t.welcome_eyebrow }}</span>
+        <h1 id="welcomeTitle">{{ t.welcome_title }}</h1>
+        <p class="welcome-description">{{ t.welcome_description }}</p>
+        {% if translation_status != "complete" %}
+            <p class="welcome-translation-note">{{ t.language_translation_notice }}</p>
+        {% endif %}
+        <div class="welcome-actions">
+            {% if current_user.is_authenticated %}
+                <a class="welcome-action-primary" href="{{ url_for('dashboard') }}">{{ t.welcome_workspace }}<span aria-hidden="true">→</span></a>
+            {% else %}
+                <a class="welcome-action-primary" href="{{ url_for('register') }}">{{ t.welcome_signup }}<span aria-hidden="true">→</span></a>
+                <a class="welcome-action-secondary" href="{{ url_for('login') }}">{{ t.welcome_login }}</a>
+            {% endif %}
+        </div>
+        <a class="welcome-explore-link" href="#services">Explore CropFarmAI <span aria-hidden="true">↓</span></a>
+    </div>
+    <div class="welcome-media-controls">
+        <p class="welcome-background-status" id="welcomeBackgroundStatus" role="status" aria-live="polite"
+           data-message-unconfigured="{{ t.animation_not_configured }}"
+           data-message-unavailable="{{ t.animation_unavailable }}"></p>
+        <button class="welcome-sound-button" id="welcomeSoundToggle" type="button" hidden
+                aria-pressed="false" aria-label="{{ t.animation_sound_on }}"
+                data-label-sound-on="{{ t.animation_sound_on }}"
+                data-label-sound-off="{{ t.animation_sound_off }}">♫</button>
+    </div>
+</section>

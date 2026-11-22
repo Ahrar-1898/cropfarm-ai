@@ -1,0 +1,18 @@
+{% extends "app_base.html" %}
+{% block page_title %}Administration | CropFarmAI{% endblock %}
+{% block workspace_content %}
+<section class="page-heading"><span class="eyebrow">ADMINISTRATION</span><h1>System overview</h1><p>Aggregate application activity and account status. Private detections and farmer images are not shown here.</p></section>
+<section class="stat-grid">
+    <article class="stat-card"><span class="stat-label">Accounts</span><span class="stat-icon stat-sage">♙</span><strong>{{ user_count }}</strong><small>Registered users</small></article>
+    <article class="stat-card"><span class="stat-label">Farms</span><span class="stat-icon stat-mint">▤</span><strong>{{ farm_count }}</strong><small>Across all accounts</small></article>
+    <article class="stat-card"><span class="stat-label">Crops tracked</span><span class="stat-icon stat-amber">♧</span><strong>{{ crop_count }}</strong><small>Across all accounts</small></article>
+    <article class="stat-card"><span class="stat-label">AI detections</span><span class="stat-icon stat-blue">⌕</span><strong>{{ detection_count }}</strong><small>Aggregate count only</small></article>
+</section>
+<div class="notice {% if model_available %}notice-success{% else %}notice-warning{% endif %}"><strong>Model status: {{ 'Available' if model_available else 'Unavailable' }}</strong><span>{% if model_available %}The configured model loaded in this application process.{% else %}The model is not available; inference requests are disabled.{% endif %}</span></div>
+<section class="panel section-gap"><div class="panel-heading"><div><span class="eyebrow">ACCOUNT MANAGEMENT</span><h2>Recent accounts</h2></div><span class="field-help">Showing up to 100</span></div>
+    <div class="table-wrap"><table class="data-table"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th><th>Status</th><th></th></tr></thead><tbody>
+    {% for user in users %}<tr><td class="table-primary">{{ user.full_name }}</td><td>{{ user.email }}</td><td>{{ user.role|title }}</td><td>{{ user.created_at.strftime('%d %b %Y') }}</td><td><span class="status-chip {% if not user.is_active %}status-risk{% else %}status-good{% endif %}">{{ 'Active' if user.is_active else 'Disabled' }}</span></td><td>{% if user.id != current_user.id %}<form method="post" action="{{ url_for('admin_toggle_user', user_id=user.id) }}" data-confirm="Change this account's active status?"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button button-outline button-small" type="submit">{{ 'Disable' if user.is_active else 'Enable' }}</button></form>{% else %}<span class="field-help">You</span>{% endif %}</td></tr>{% endfor %}
+    </tbody></table></div>
+</section>
+<div class="notice notice-info"><strong>Admin access</strong><span>Promote an existing user using the terminal command <code>flask --app app promote-admin</code>.</span></div>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "app_base.html" %}
+{% block page_title %}Soil monitoring | CropFarmAI{% endblock %}
+{% block workspace_content %}
+<section class="page-heading"><span class="eyebrow">FIELD OBSERVATIONS</span><h1>Soil monitoring</h1><p>Record measurements from your own observations or devices.</p></section>
+<div class="notice notice-info"><strong>Manual readings</strong><span>These values are entered by you. No soil sensors are connected to this application.</span></div>
+<section class="management-layout">
+    <article class="panel form-panel"><div class="panel-heading"><div><span class="eyebrow">NEW READING</span><h2>Record soil data</h2></div></div>
+        <form method="post" class="form-stack">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label>Field <span class="optional">(optional)</span><select name="field_id"><option value="">Not linked to a field</option>{% for field in fields %}<option value="{{ field.id }}">{{ field.farm.farm_name }} · {{ field.field_name }}</option>{% endfor %}</select></label>
+            <div class="form-row"><label>Moisture (%)<input type="number" name="moisture" min="0" max="100" step="0.1" placeholder="0–100"></label><label>Temperature (°C)<input type="number" name="temperature" step="0.1" placeholder="Optional"></label></div>
+            <div class="form-row"><label>pH value<input type="number" name="ph_value" min="0" max="14" step="0.1" placeholder="0–14"></label><label>Nutrients / notes<input name="nutrient_information" maxlength="1000" placeholder="Optional notes"></label></div>
+            <p class="field-help">Enter at least one measurement or a note. Moisture and pH ranges are validated.</p>
+            <button class="button button-primary" type="submit">Save reading <span>→</span></button>
+        </form>
+    </article>
+    <section class="farm-list"><div class="section-inline-heading"><div><span class="eyebrow">RECENT READINGS</span><h2>{{ readings|length }} record{{ '' if readings|length == 1 else 's' }}</h2></div></div>
+        {% for reading in readings %}
+        <article class="panel soil-record"><div class="soil-record-head"><div><span class="eyebrow">{{ reading.recorded_at.strftime('%d %b %Y · %H:%M') }}</span><h3>{{ reading.field.field_name if reading.field else 'Farm-wide reading' }}</h3></div><span class="status-chip">{{ reading.reading_source|title }}</span></div>
+            <div class="soil-values">{% if reading.moisture is not none %}<span><small>MOISTURE</small><strong>{{ reading.moisture }}%</strong></span>{% endif %}{% if reading.temperature is not none %}<span><small>TEMPERATURE</small><strong>{{ reading.temperature }}°C</strong></span>{% endif %}{% if reading.ph_value is not none %}<span><small>PH</small><strong>{{ reading.ph_value }}</strong></span>{% endif %}</div>
+            {% if reading.nutrient_information %}<p>{{ reading.nutrient_information }}</p>{% endif %}
+            <form method="post" action="{{ url_for('delete_soil_reading', reading_id=reading.id) }}" data-confirm="Delete this soil reading?"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button-link button-danger" type="submit">Delete reading</button></form>
+        </article>
+        {% else %}<div class="panel empty-state"><span class="empty-icon">◉</span><h3>No soil readings yet</h3><p>Record manually collected measurements to build a simple history.</p></div>{% endfor %}
+    </section>
+</section>
+{% endblock %}

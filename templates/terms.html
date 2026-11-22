@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Terms | CropFarmAI{% endblock %}
+{% block body_class %}legal-page{% endblock %}
+{% block content %}
+<main class="legal-content" dir="ltr">
+    <a class="legal-back" href="{{ url_for('home') }}">← Back to CropFarmAI</a>
+    <span class="home-eyebrow">TERMS</span>
+    <h1>Terms of use</h1>
+    <p class="legal-draft">Deployment-specific draft — review with the responsible operator before public production use.</p>
+    <h2>Informational crop screening</h2>
+    <p>CropFarmAI displays results from an image-classification model. A prediction or confidence score is not a confirmed diagnosis, treatment prescription or guarantee of crop outcome. Verify important decisions with a qualified local agricultural professional.</p>
+    <h2>Accounts and records</h2>
+    <p>Provide accurate account information, protect your login credentials and use only accounts you are authorized to access. Do not upload images or information you do not have permission to use.</p>
+    <h2>Service limits</h2>
+    <p>Availability depends on the deployment, configured database, model files and external providers. Weather information may be unavailable. Irrigation and soil entries are records only; CropFarmAI does not control physical equipment or connected sensors.</p>
+    <h2>Operator and contact</h2>
+    <p>The person operating this deployment is responsible for its configuration, data retention and support. Contact details must be supplied by that operator before these terms are used as a production policy.</p>
+</main>
+{% endblock %}

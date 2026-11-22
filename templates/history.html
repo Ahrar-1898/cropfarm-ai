@@ -1,0 +1,34 @@
+{% extends "app_base.html" %}
+{% block page_title %}Disease history | CropFarmAI{% endblock %}
+{% block workspace_content %}
+<section class="page-heading page-heading-row"><div><span class="eyebrow">YOUR PRIVATE RECORDS</span><h1>Disease history</h1><p>Review saved model results and the images you submitted.</p></div><a class="button button-primary" href="{{ url_for('scanner') }}">⌕ <span>New scan</span></a></section>
+<section class="panel filter-panel">
+    <form method="get" class="filter-form">
+        <label>Crop<select name="crop"><option value="">All crops</option>{% for crop in crops %}<option value="{{ crop }}" {% if filters.crop == crop %}selected{% endif %}>{{ crop }}</option>{% endfor %}</select></label>
+        <label>Disease search<input name="disease" value="{{ filters.disease }}" placeholder="Search result"></label>
+        <label>From<input type="date" name="start" value="{{ filters.start }}"></label>
+        <label>To<input type="date" name="end" value="{{ filters.end }}"></label>
+        <button class="button button-primary button-small" type="submit">Apply filters</button>
+        <a class="button button-quiet button-small" href="{{ url_for('history') }}">Clear</a>
+    </form>
+</section>
+<section class="history-list">
+    {% for detection in pagination.items %}
+    <article class="panel history-card">
+        {% if detection.images %}<img class="history-thumb" src="{{ url_for('uploaded_image', filename=detection.images[0].original_image_path) }}" alt="Uploaded {{ detection.crop_name }} image">{% else %}<div class="history-thumb history-placeholder">♧</div>{% endif %}
+        <div class="history-copy"><span class="eyebrow">{{ detection.crop_name|upper }} · {{ detection.created_at.strftime('%d %b %Y, %H:%M') }}</span><h2>{{ detection.predicted_disease.replace('_', ' ') }}</h2><p>{{ detection.farm.farm_name if detection.farm else 'Farm not linked' }}{% if detection.field %} · {{ detection.field.field_name }}{% endif %}</p></div>
+        <div class="history-confidence"><small>CONFIDENCE</small><strong>{{ '%.2f'|format(detection.confidence_score) }}%</strong></div>
+        <a class="button button-outline button-small" href="{{ url_for('detection_detail', detection_id=detection.unique_detection_id) }}">View details <span>→</span></a>
+    </article>
+    {% else %}
+    <article class="panel empty-state"><span class="empty-icon">◷</span><h3>No previous crop analysis found.</h3><p>Upload your first crop image to get started. Completed analyses are saved to your private history.</p><a class="button button-primary button-small" href="{{ url_for('scanner') }}">Analyze a crop <span>→</span></a></article>
+    {% endfor %}
+</section>
+{% if pagination.pages > 1 %}
+<nav class="pagination" aria-label="History pages">
+    {% if pagination.has_prev %}<a class="button button-outline button-small" href="{{ url_for('history', page=pagination.prev_num, **filters) }}">← Previous</a>{% endif %}
+    <span>Page {{ pagination.page }} of {{ pagination.pages }}</span>
+    {% if pagination.has_next %}<a class="button button-outline button-small" href="{{ url_for('history', page=pagination.next_num, **filters) }}">Next →</a>{% endif %}
+</nav>
+{% endif %}
+{% endblock %}

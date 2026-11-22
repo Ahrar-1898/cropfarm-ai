@@ -1,0 +1,30 @@
+{% extends "app_base.html" %}
+{% block page_title %}Irrigation | CropFarmAI{% endblock %}
+{% block workspace_content %}
+<section class="page-heading"><span class="eyebrow">WATERING RECORDS</span><h1>Irrigation</h1><p>Plan and record schedules manually. CropFarmAI does not control irrigation equipment.</p></section>
+<div class="notice notice-info"><strong>Manual scheduling only</strong><span>Schedules here are records and reminders for your planning; no physical system is connected.</span></div>
+{% if irrigation_advisory %}
+<section class="panel irrigation-advisory"><span class="eyebrow">WEATHER CONTEXT · {{ weather_report.location }}</span><h2>Plan with local conditions in mind</h2><p>{{ irrigation_advisory.summary }}</p><small>{{ irrigation_advisory.basis }}</small><a class="button button-outline button-small" href="{{ url_for('weather', location=location) }}">View forecast</a></section>
+{% else %}
+<div class="notice notice-info"><strong>Weather context unavailable</strong><span>{{ weather_error }} <a href="{{ url_for('weather', location=location) }}">Open weather</a></span></div>
+{% endif %}
+<section class="management-layout">
+    <article class="panel form-panel"><div class="panel-heading"><div><span class="eyebrow">NEW SCHEDULE</span><h2>Plan irrigation</h2></div></div>
+        <form method="post" class="form-stack">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label>Field <span class="optional">(optional)</span><select name="field_id"><option value="">Not linked to a field</option>{% for field in fields %}<option value="{{ field.id }}">{{ field.farm.farm_name }} · {{ field.field_name }}</option>{% endfor %}</select></label>
+            <label>Planned date<input type="date" name="irrigation_date" required></label>
+            <div class="form-row"><label>Water quantity <span class="optional">(optional)</span><div class="input-unit"><input name="water_quantity" type="number" min="0.01" step="0.01" placeholder="0.00"><span>m³</span></div></label><label>Schedule note <span class="optional">(optional)</span><input name="schedule" maxlength="180" placeholder="e.g. Morning drip"></label></div>
+            <button class="button button-primary" type="submit">Save schedule <span>→</span></button>
+        </form>
+    </article>
+    <section class="farm-list"><div class="section-inline-heading"><div><span class="eyebrow">YOUR RECORDS</span><h2>{{ records|length }} schedule{{ '' if records|length == 1 else 's' }}</h2></div></div>
+        {% for record in records %}
+        <article class="panel record-card"><div class="record-icon">⌁</div><div class="record-copy"><span class="eyebrow">{{ record.irrigation_date.strftime('%d %b %Y') }}</span><h3>{{ record.field.field_name if record.field else 'Farm-wide schedule' }}</h3><p>{{ record.schedule or 'No schedule note' }}{% if record.water_quantity is not none %} · {{ record.water_quantity }} m³{% endif %}</p></div><span class="status-chip {% if record.status == 'completed' %}status-good{% endif %}">{{ record.status|title }}</span>
+            {% if record.status != 'completed' %}<form method="post" action="{{ url_for('complete_irrigation', record_id=record.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button button-outline button-small" type="submit">Mark complete</button></form>{% endif %}
+            <form method="post" action="{{ url_for('delete_irrigation', record_id=record.id) }}" data-confirm="Delete this irrigation record?"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button-link button-danger" type="submit">Delete</button></form>
+        </article>
+        {% else %}<div class="panel empty-state"><span class="empty-icon">⌁</span><h3>No irrigation schedules</h3><p>Add a manual schedule to keep a record of planned watering.</p></div>{% endfor %}
+    </section>
+</section>
+{% endblock %}

@@ -1,0 +1,17 @@
+<section class="home-section home-get-started" id="get-started" dir="ltr" aria-labelledby="getStartedTitle">
+    <div class="home-container home-get-started-inner">
+        <div>
+            <span class="home-eyebrow">GET STARTED</span>
+            <h2 id="getStartedTitle">A more organized view of your farm starts here.</h2>
+            <p>Create a private account or return to your existing CropFarmAI workspace.</p>
+        </div>
+        <div class="home-get-started-actions">
+            {% if current_user.is_authenticated %}
+                <a class="home-button home-button-light" href="{{ url_for('dashboard') }}">Open workspace <span aria-hidden="true">→</span></a>
+            {% else %}
+                <a class="home-button home-button-light" href="{{ url_for('register') }}">Create account <span aria-hidden="true">→</span></a>
+                <a class="home-button home-button-ghost" href="{{ url_for('login') }}">Sign in</a>
+            {% endif %}
+        </div>
+    </div>
+</section>

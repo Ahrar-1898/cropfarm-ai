@@ -1,11 +1,44 @@
-
+# Python environments and caches
+.venv/
 venv/
 __pycache__/
-*.pyc
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.tox/
+.coverage*
+
+# Node dependencies and build output
+**/node_modules/
+**/dist/
+.vite/
+.cache/
+
+# Local credentials and environment files
 .env
 .env.*
 !.env.example
-dataset/
+
+# Local databases, uploads, reports, datasets, and temporary files
+instance/
 uploads/
 reports/
+dataset/
+static/dataset/
+*.db
+*.sqlite
+*.sqlite3
+*.log
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+
+# Operating system and editor state
 .DS_Store
+.vscode/
+.idea/

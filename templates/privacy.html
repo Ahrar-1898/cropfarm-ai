@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Privacy | CropFarmAI{% endblock %}
+{% block body_class %}legal-page{% endblock %}
+{% block content %}
+<main class="legal-content" dir="ltr">
+    <a class="legal-back" href="{{ url_for('home') }}">← Back to CropFarmAI</a>
+    <span class="home-eyebrow">PRIVACY</span>
+    <h1>Privacy information</h1>
+    <p class="legal-draft">Deployment-specific draft — review and update before public production use.</p>
+    <h2>Information the application handles</h2>
+    <p>Account details include your name, email address, optional phone number and location, plus a securely hashed password. Farm, field, crop, irrigation, soil and crop-analysis records are associated with your account.</p>
+    <p>Uploaded crop images and generated reports are stored by the application under its configured instance storage. The database and file storage are controlled by the person operating this deployment.</p>
+    <h2>External services</h2>
+    <p>Weather lookup uses Open-Meteo and sends the requested location to that provider. Password-reset email is sent only when the operator configures SMTP. Contact messages are sent to the configured support address only when both support and SMTP settings are available.</p>
+    <h2>Access and retention</h2>
+    <p>Application routes scope private farm and detection records to the signed-in account. Data remains in the configured database and storage until removed by the account holder through available controls or by the deployment operator.</p>
+    <h2>Deployment contact</h2>
+    <p>No operator contact address is currently published by the application. Contact your deployment administrator for privacy questions and data requests.</p>
+    <p>Before deployment, the operator should confirm the applicable retention period, hosting region, backup practices and contact details.</p>
+</main>
+{% endblock %}

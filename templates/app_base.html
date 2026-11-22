@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}{% block page_title %}CropFarmAI | Farm workspace{% endblock %}{% endblock %}
+{% block body_class %}workspace-body{% endblock %}
+{% block content %}
+<div class="workspace">
+    <aside class="sidebar" id="workspaceSidebar">
+        <a class="brand brand-sidebar" href="{{ url_for('dashboard') }}">
+            <span class="brand-mark">C</span><span>CropFarm<span class="brand-accent">AI</span><small>SMART AGRICULTURE</small></span>
+        </a>
+        <p class="nav-caption">{{ t.nav_workspace }}</p>
+        <nav class="side-nav" aria-label="{{ t.nav_main }}">
+            <a class="{% if active_page == 'overview' %}active{% endif %}" href="{{ url_for('dashboard') }}"><span>⌂</span>{{ t.nav_overview }}</a>
+            <a class="{% if active_page == 'scanner' %}active{% endif %}" href="{{ url_for('scanner') }}"><span>⌕</span>{{ t.nav_scanner }}</a>
+            <a class="{% if active_page == 'farms' %}active{% endif %}" href="{{ url_for('farms_page') }}"><span>▤</span>{{ t.nav_farms }}</a>
+            <a class="{% if active_page == 'fields' %}active{% endif %}" href="{{ url_for('fields_page') }}"><span>▦</span>{{ t.nav_fields }}</a>
+            <a class="{% if active_page == 'crops' %}active{% endif %}" href="{{ url_for('crops_page') }}"><span>♧</span>{{ t.nav_crops }}</a>
+            <a class="{% if active_page == 'health' %}active{% endif %}" href="{{ url_for('crop_health') }}"><span>♡</span>{{ t.nav_health }}</a>
+            <a class="{% if active_page == 'history' %}active{% endif %}" href="{{ url_for('history') }}"><span>◷</span>{{ t.nav_history }}</a>
+        </nav>
+        <p class="nav-caption nav-caption-spaced">{{ t.nav_operations }}</p>
+        <nav class="side-nav" aria-label="{{ t.nav_operations }}">
+            <a class="{% if active_page == 'weather' %}active{% endif %}" href="{{ url_for('weather') }}"><span>☼</span>{{ t.nav_weather }}</a>
+            <a class="{% if active_page == 'irrigation' %}active{% endif %}" href="{{ url_for('irrigation') }}"><span>⌁</span>{{ t.nav_irrigation }}</a>
+            <a class="{% if active_page == 'soil' %}active{% endif %}" href="{{ url_for('soil') }}"><span>◉</span>{{ t.nav_soil }}</a>
+            <a class="{% if active_page == 'analytics' %}active{% endif %}" href="{{ url_for('analytics') }}"><span>▥</span>{{ t.nav_analytics }}</a>
+            <a class="{% if active_page == 'reports' %}active{% endif %}" href="{{ url_for('reports') }}"><span>▧</span>{{ t.nav_reports }}</a>
+        </nav>
+        <p class="nav-caption nav-caption-spaced">{{ t.nav_account }}</p>
+        <nav class="side-nav" aria-label="{{ t.nav_account }}">
+            <a class="{% if active_page == 'profile' %}active{% endif %}" href="{{ url_for('profile') }}"><span>◌</span>{{ t.nav_profile }}</a>
+            <a class="{% if active_page == 'settings' %}active{% endif %}" href="{{ url_for('settings') }}"><span>⚙</span>{{ t.nav_settings }}</a>
+            <a class="{% if active_page == 'help' %}active{% endif %}" href="{{ url_for('help_page') }}"><span>?</span>{{ t.nav_help }}</a>
+            {% if current_user.role == 'admin' %}
+            <a class="{% if active_page == 'admin' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}"><span>♙</span>{{ t.nav_admin }}</a>
+            {% endif %}
+        </nav>
+        <div class="sidebar-bottom">
+            <div class="sidebar-tip"><span>✦</span><strong>{{ t.welcome_title }}</strong><p>{{ t.welcome_description }}</p></div>
+            <form method="post" action="{{ url_for('logout') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="side-logout" type="submit"><span>↪</span>{{ t.nav_sign_out }}</button>
+            </form>
+        </div>
+    </aside>
+    <div class="workspace-main">
+        <header class="topbar">
+            <button type="button" class="mobile-menu" id="menuToggle" aria-label="{{ t.nav_toggle }}" aria-expanded="false">☰</button>
+            <form class="top-search" action="{{ url_for('history') }}" method="get">
+                <span aria-hidden="true">⌕</span><input type="search" name="disease" placeholder="{{ t.nav_search }}" aria-label="{{ t.nav_search_aria }}">
+            </form>
+            <div class="topbar-actions">
+                <a class="icon-button notification-button" href="{{ url_for('notifications') }}"
+                   aria-label="{{ t.nav_notifications }}{% if unread_notification_count %}, {{ t.unread_count_label.format(count=unread_notification_count) }}{% endif %}"
+                   title="{{ t.nav_notifications }}">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
+                        <path d="M10 21h4"></path>
+                    </svg>
+                    {% if unread_notification_count %}
+                    <span class="notification-count" aria-hidden="true">{{ unread_notification_count }}</span>
+                    {% endif %}
+                </a>
+                <button class="theme-toggle" id="themeToggle" type="button"
+                        data-theme-url="{{ url_for('set_theme') }}"
+                        data-csrf-token="{{ csrf_token() }}"
+                        data-switch-to-day="{{ t.theme_switch_to_day }}"
+                        data-switch-to-night="{{ t.theme_switch_to_night }}"
+                        data-save-error="{{ t.theme_save_error }}"
+                        aria-label="{{ t.theme_switch_to_night if current_theme == 'day' else t.theme_switch_to_day }}"
+                        title="{{ t.theme_switch_to_night if current_theme == 'day' else t.theme_switch_to_day }}"
+                        aria-pressed="{{ 'true' if current_theme == 'night' else 'false' }}">
+                    <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <circle cx="12" cy="12" r="4"></circle>
+                        <path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"></path>
+                    </svg>
+                    <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path d="M20.2 15.1A8.5 8.5 0 0 1 8.9 3.8 8.6 8.6 0 1 0 20.2 15.1Z"></path>
+                    </svg>
+                </button>
+                <div class="profile-menu-wrap">
+                    <button class="user-chip" id="profileMenuToggle" type="button"
+                            aria-label="{{ t.profile_menu }}" title="{{ t.profile_menu }}"
+                            aria-haspopup="menu" aria-expanded="false" aria-controls="profileMenu">
+                        <span class="avatar">{{ current_user.full_name[:1]|upper }}</span>
+                        <span class="user-chip-copy"><strong>{{ current_user.full_name }}</strong><small>{{ current_user.role|title }}</small></span>
+                        <span class="user-chevron" aria-hidden="true">⌄</span>
+                    </button>
+                    <div class="profile-menu" id="profileMenu" role="menu" hidden>
+                        <a role="menuitem" href="{{ url_for('profile') }}">{{ t.nav_profile }}</a>
+                        <a role="menuitem" href="{{ url_for('settings') }}">{{ t.nav_settings }}</a>
+                        <form method="post" action="{{ url_for('logout') }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button role="menuitem" type="submit">{{ t.nav_sign_out }}</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <span class="sr-only" id="themeSaveStatus" role="status" aria-live="polite"></span>
+        </header>
+        <main class="workspace-content">
+            {% if translation_status != "complete" %}<div class="notice notice-info language-fallback-notice">{{ t.language_translation_notice }}</div>{% endif %}
+            {% block workspace_content %}{% endblock %}
+        </main>
+        <footer class="workspace-footer"><span>CropFarmAI</span><span>Smarter Farming. Healthier Crops. Better Future.</span></footer>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script defer src="{{ url_for('static', filename='js/workspace.js') }}"></script>
+{% endblock %}

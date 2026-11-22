@@ -1,0 +1,7 @@
+{% extends "app_base.html" %}
+{% block page_title %}Reports | CropFarmAI{% endblock %}
+{% block workspace_content %}
+<section class="page-heading"><span class="eyebrow">YOUR FARM RECORDS</span><h1>Reports & exports</h1><p>Download your saved AI detection records or open an individual report.</p></section>
+<section class="report-download-card panel"><div class="report-file-icon">▧</div><div><span class="eyebrow">DETECTION DATA</span><h2>Export all detections as CSV</h2><p>{{ detection_count }} saved record{{ '' if detection_count == 1 else 's' }} · includes crop, prediction, confidence, farm and field where recorded.</p></div><a class="button button-primary" href="{{ url_for('export_detections') }}">Download CSV <span>↓</span></a></section>
+<div class="notice notice-info"><strong>Private by account</strong><span>Exports contain only your own records. Individual PDF reports are available from the detection history when generated successfully.</span><a class="text-link" href="{{ url_for('history') }}">Open detection history →</a></div>
+{% endblock %}

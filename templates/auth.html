@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}{% if mode == 'register' %}{{ t.auth_create_title }}{% elif mode == 'forgot' %}{{ t.auth_recovery_title }}{% elif mode == 'reset' %}{{ t.auth_reset_title }}{% else %}{{ t.auth_sign_in }}{% endif %} | CropFarmAI{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">{% endblock %}
+{% block body_class %}auth-body{% endblock %}
+{% block content %}
+<main class="auth-layout">
+    <section class="auth-story">
+        <a class="brand brand-light" href="{{ url_for('home') }}"><span class="brand-mark">C</span><span>CropFarm<span class="brand-accent">AI</span><small>SMART AGRICULTURE</small></span></a>
+        <div class="auth-story-copy">
+            <span class="eyebrow eyebrow-light">{{ t.welcome_eyebrow }}</span>
+            <h1>{{ t.auth_story_title }}</h1>
+            <p>{{ t.auth_story_description }}</p>
+            <div class="auth-proof"><span>✦</span><span><strong>{{ t.dashboard_crops }}</strong><small>{{ t.welcome_description }}</small></span></div>
+        </div>
+        <span class="auth-story-footer">CropFarmAI · {{ t.welcome_eyebrow|title }}</span>
+    </section>
+    <section class="auth-panel-wrap">
+        <div class="auth-panel">
+            <a class="auth-back" href="{{ url_for('home') }}">← <span>{{ t.auth_back_to_site }}</span></a>
+            {% if translation_status != "complete" %}<p class="auth-translation-note">{{ t.language_translation_notice }}</p>{% endif %}
+            {% if mode == 'register' %}
+                <span class="eyebrow">{{ t.welcome_signup|upper }}</span><h2>{{ t.auth_create_title }}</h2><p class="muted">{{ t.auth_create_description }}</p>
+                <form method="post" class="form-stack">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <label>{{ t.auth_full_name }}<input name="full_name" autocomplete="name" maxlength="120" value="{{ request.form.get('full_name', '') }}" required></label>
+                    <label>{{ t.auth_email }}<input name="email" type="email" autocomplete="email" maxlength="254" value="{{ request.form.get('email', '') }}" required></label>
+                    <div class="form-row">
+                        <label>{{ t.auth_phone }} <span class="optional">({{ t.auth_optional }})</span><input name="phone" type="tel" autocomplete="tel" value="{{ request.form.get('phone', '') }}"></label>
+                        <label>{{ t.auth_location }} <span class="optional">({{ t.auth_optional }})</span><input name="location" autocomplete="address-level2" value="{{ request.form.get('location', '') }}"></label>
+                    </div>
+                    <label>{{ t.auth_farm }} <span class="optional">({{ t.auth_optional }})</span><input name="farm_name" value="{{ request.form.get('farm_name', '') }}"></label>
+                    <div class="form-row">
+                        <label>{{ t.auth_password }}<span class="auth-password-field"><input id="registerPassword" name="password" type="password" autocomplete="new-password" minlength="10" required><button class="auth-password-toggle" type="button" data-password-toggle aria-pressed="false" aria-label="{{ t.auth_show_password }}" data-show-label="{{ t.auth_show_password }}" data-hide-label="{{ t.auth_hide_password }}">{{ t.auth_show_password }}</button></span></label>
+                        <label>{{ t.auth_confirm_password }}<span class="auth-password-field"><input id="confirmRegisterPassword" name="confirm_password" type="password" autocomplete="new-password" minlength="10" required><button class="auth-password-toggle" type="button" data-password-toggle aria-pressed="false" aria-label="{{ t.auth_show_password }}" data-show-label="{{ t.auth_show_password }}" data-hide-label="{{ t.auth_hide_password }}">{{ t.auth_show_password }}</button></span></label>
+                    </div>
+                    <p class="field-help">{{ t.auth_password_hint }}</p>
+                    <button class="button button-primary button-wide" type="submit">{{ t.auth_create_account }} <span>→</span></button>
+                </form>
+                <p class="auth-switch">{{ t.auth_existing_account }} <a href="{{ url_for('login') }}">{{ t.auth_sign_in }}</a></p>
+            {% elif mode == 'forgot' %}
+                <span class="eyebrow">{{ t.auth_recovery_title|upper }}</span><h2>{{ t.auth_recovery_title }}</h2><p class="muted">{{ t.auth_recovery_description }}</p>
+                <form method="post" class="form-stack">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <label>{{ t.auth_email }}<input name="email" type="email" autocomplete="email" required></label>
+                    <button class="button button-primary button-wide" type="submit">{{ t.auth_send_reset }} <span>→</span></button>
+                </form>
+                <p class="auth-switch"><a href="{{ url_for('login') }}">{{ t.auth_back_sign_in }}</a></p>
+            {% elif mode == 'reset' %}
+                <span class="eyebrow">{{ t.auth_recovery_title|upper }}</span><h2>{{ t.auth_reset_title }}</h2><p class="muted">{{ t.auth_reset_description }}</p>
+                <form method="post" class="form-stack">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <label>{{ t.auth_new_password }}<span class="auth-password-field"><input id="resetPassword" name="password" type="password" autocomplete="new-password" minlength="10" required><button class="auth-password-toggle" type="button" data-password-toggle aria-pressed="false" aria-label="{{ t.auth_show_password }}" data-show-label="{{ t.auth_show_password }}" data-hide-label="{{ t.auth_hide_password }}">{{ t.auth_show_password }}</button></span></label>
+                    <label>{{ t.auth_confirm_new_password }}<span class="auth-password-field"><input id="confirmResetPassword" name="confirm_password" type="password" autocomplete="new-password" minlength="10" required><button class="auth-password-toggle" type="button" data-password-toggle aria-pressed="false" aria-label="{{ t.auth_show_password }}" data-show-label="{{ t.auth_show_password }}" data-hide-label="{{ t.auth_hide_password }}">{{ t.auth_show_password }}</button></span></label>
+                    <button class="button button-primary button-wide" type="submit">{{ t.auth_update_password }} <span>→</span></button>
+                </form>
+            {% else %}
+                <span class="eyebrow">{{ t.welcome_login|upper }}</span><h2>{{ t.auth_login_title }}</h2><p class="muted">{{ t.auth_login_description }}</p>
+                <form method="post" class="form-stack">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <label>{{ t.auth_email }}<input name="email" type="email" autocomplete="email" value="{{ request.form.get('email', '') }}" required></label>
+                    <label>{{ t.auth_password }}<span class="auth-password-field"><input id="loginPassword" name="password" type="password" autocomplete="current-password" required><button class="auth-password-toggle" type="button" data-password-toggle aria-pressed="false" aria-label="{{ t.auth_show_password }}" data-show-label="{{ t.auth_show_password }}" data-hide-label="{{ t.auth_hide_password }}">{{ t.auth_show_password }}</button></span></label>
+                    <div class="form-inline"><label class="check-label"><input type="checkbox" name="remember"> {{ t.auth_remember }}</label><a href="{{ url_for('forgot_password') }}">{{ t.auth_forgot }}</a></div>
+                    <button class="button button-primary button-wide" type="submit">{{ t.auth_sign_in }} <span>→</span></button>
+                </form>
+                <p class="auth-switch">{{ t.auth_new_to }} <a href="{{ url_for('register') }}">{{ t.auth_create_link }}</a></p>
+            {% endif %}
+        </div>
+    </section>
+</main>
+{% endblock %}
+{% block scripts %}<script defer src="{{ url_for('static', filename='js/auth.js') }}"></script>{% endblock %}

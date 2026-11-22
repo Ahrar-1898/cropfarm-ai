@@ -1,0 +1,52 @@
+{% extends "app_base.html" %}
+{% block page_title %}My crops | CropFarmAI{% endblock %}
+{% block workspace_content %}
+<section class="page-heading"><span class="eyebrow">FOLLOW WHAT YOU GROW</span><h1>My crops</h1><p>Track only the categories supported by the included classifier, plus your own crop notes.</p></section>
+<section class="management-layout">
+    <article class="panel form-panel"><div class="panel-heading"><div><span class="eyebrow">CROP DETAILS</span><h2>Add a crop</h2></div></div>
+        <form method="post" class="form-stack">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label>Crop category<select name="crop_name" required><option value="">Choose a crop</option>{% for crop in supported_crops %}<option>{{ crop }}</option>{% endfor %}</select></label>
+            <div class="form-row"><label>Farm <span class="optional">(optional)</span><select name="farm_id" id="cropFarm"><option value="">Not assigned</option>{% for farm in farms %}<option value="{{ farm.id }}">{{ farm.farm_name }}</option>{% endfor %}</select></label><label>Field <span class="optional">(optional)</span><select name="field_id" id="cropField"><option value="">Not assigned</option>{% for field in fields %}<option value="{{ field.id }}" data-farm="{{ field.farm_id }}">{{ field.field_name }} · {{ field.farm.farm_name }}</option>{% endfor %}</select></label></div>
+            <div class="form-row"><label>Planting date<input type="date" name="planting_date"></label><label>Expected harvest<input type="date" name="harvesting_date"></label></div>
+            <label>Growth stage <span class="optional">(optional)</span><input name="growth_stage" maxlength="80" placeholder="e.g. Vegetative"></label>
+            <label>Health status <span class="optional">Manual observation</span><select name="health_status"><option>Unknown</option><option>Healthy</option><option>At risk</option><option>Needs attention</option></select></label>
+            <button class="button button-primary" type="submit">Add crop <span>→</span></button>
+        </form>
+    </article>
+    <section class="farm-list">
+        <div class="section-inline-heading"><div><span class="eyebrow">CROP REGISTER</span><h2>{{ crops|length }} crop{{ '' if crops|length == 1 else 's' }}</h2></div></div>
+        {% for crop in crops %}
+        <article class="panel crop-card">
+            <div class="farm-card-top"><span class="crop-leaf">♧</span><div><h3>{{ crop.crop_name }}</h3><p>{% if crop.farm %}{{ crop.farm.farm_name }}{% else %}Farm not assigned{% endif %}{% if crop.field %} · {{ crop.field.field_name }}{% endif %}</p></div><span class="status-chip {% if crop.health_status == 'Healthy' %}status-good{% elif crop.health_status in ['At risk', 'Needs attention'] %}status-risk{% endif %}">{{ crop.health_status }}</span></div>
+            <div class="farm-meta"><span><small>PLANTED</small><strong>{{ crop.planting_date.strftime('%d %b %Y') if crop.planting_date else 'Not recorded' }}</strong></span><span><small>GROWTH STAGE</small><strong>{{ crop.growth_stage or 'Not recorded' }}</strong></span></div>
+            <form method="post" action="{{ url_for('update_crop', crop_id=crop.id) }}" class="crop-update-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <label>Health status <select name="health_status"><option {% if crop.health_status == 'Unknown' %}selected{% endif %}>Unknown</option><option {% if crop.health_status == 'Healthy' %}selected{% endif %}>Healthy</option><option {% if crop.health_status == 'At risk' %}selected{% endif %}>At risk</option><option {% if crop.health_status == 'Needs attention' %}selected{% endif %}>Needs attention</option></select></label>
+                <label>Growth stage<input name="growth_stage" value="{{ crop.growth_stage or '' }}" maxlength="80"></label>
+                <button class="button button-outline button-small" type="submit">Save observation</button>
+            </form>
+            <form method="post" action="{{ url_for('delete_crop', crop_id=crop.id) }}" data-confirm="Delete this crop record? Its detection history will be retained.">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button-link button-danger" type="submit">Delete crop</button>
+            </form>
+        </article>
+        {% else %}<div class="panel empty-state"><span class="empty-icon">♧</span><h3>No crops tracked yet</h3><p>Add a crop to begin recording planting and health observations.</p></div>{% endfor %}
+    </section>
+</section>
+{% endblock %}
+{% block scripts %}
+{{ super() }}
+<script>
+    const cropFarm = document.getElementById("cropFarm");
+    const cropField = document.getElementById("cropField");
+    if (cropFarm && cropField) {
+        cropFarm.addEventListener("change", () => {
+            Array.from(cropField.options).forEach((option) => {
+                if (!option.value) return;
+                option.hidden = Boolean(cropFarm.value && option.dataset.farm !== cropFarm.value);
+                if (option.hidden && option.selected) cropField.value = "";
+            });
+        });
+    }
+</script>
+{% endblock %}

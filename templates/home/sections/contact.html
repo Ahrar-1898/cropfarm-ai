@@ -1,0 +1,24 @@
+<section class="home-section home-contact" id="contact" dir="ltr" aria-labelledby="contactTitle">
+    <div class="home-container home-contact-layout">
+        <div class="home-section-heading">
+            <span class="home-eyebrow">CONTACT US</span>
+            <h2 id="contactTitle">Send a message to the deployment team.</h2>
+            <p>We do not publish an email address or office location because none is configured for this installation.</p>
+            {% if not contact_form_enabled %}
+                <div class="home-contact-status" role="status">Contact delivery is not configured. The administrator must set SUPPORT_EMAIL and SMTP settings before messages can be sent.</div>
+            {% endif %}
+        </div>
+        <form class="home-contact-form" method="post" action="{{ url_for('contact_submit') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="home-honeypot" aria-hidden="true">
+                <label for="contactCompany">Leave this field empty</label>
+                <input id="contactCompany" name="company" type="text" tabindex="-1" autocomplete="off">
+            </div>
+            <label>Full name<input name="full_name" autocomplete="name" maxlength="120" value="{{ request.form.get('full_name', '') }}" required></label>
+            <label>Email address<input name="email" type="email" autocomplete="email" maxlength="254" value="{{ request.form.get('email', '') }}" required></label>
+            <label>Subject<input name="subject" maxlength="180" value="{{ request.form.get('subject', '') }}" required></label>
+            <label>Message<textarea name="message" rows="5" maxlength="5000" required>{{ request.form.get('message', '') }}</textarea></label>
+            <button class="home-button home-button-dark" type="submit" {% if not contact_form_enabled %}disabled{% endif %}>Send message <span aria-hidden="true">→</span></button>
+        </form>
+    </div>
+</section>

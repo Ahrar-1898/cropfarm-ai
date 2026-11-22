@@ -1,0 +1,10 @@
+{% extends "app_base.html" %}
+{% block page_title %}{{ t.notifications_page_title }} | CropFarmAI{% endblock %}
+{% block workspace_content %}
+<section class="page-heading page-heading-row"><div><span class="eyebrow">{{ t.notifications_page_eyebrow }}</span><h1>{{ t.notifications_page_title }}</h1><p>{{ t.notifications_page_description }}</p></div><form method="post" action="{{ url_for('mark_all_notifications_read') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button button-outline button-small" type="submit">{{ t.notifications_mark_all }}</button></form></section>
+<section class="notification-list">
+    {% for notification in notifications %}
+    <article class="panel notification-card {% if not notification.is_read %}notification-unread{% endif %}"><span class="notification-mark">{% if notification.notification_type == 'detection' %}⌕{% else %}✦{% endif %}</span><div class="notification-copy"><div><h2>{{ notification.title }}</h2>{% if not notification.is_read %}<span class="unread-label">{{ t.notifications_new }}</span>{% endif %}</div><p>{{ notification.message }}</p><small>{{ notification.created_at.strftime('%d %b %Y, %H:%M') }}</small></div><div class="notification-actions">{% if not notification.is_read %}<form method="post" action="{{ url_for('mark_notification_read', notification_id=notification.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button button-outline button-small" type="submit">{{ t.notifications_mark_read }}</button></form>{% endif %}<form method="post" action="{{ url_for('delete_notification', notification_id=notification.id) }}" data-confirm="{{ t.notifications_delete_confirmation }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button-link button-danger" type="submit">{{ t.notifications_delete }}</button></form></div></article>
+    {% else %}<div class="panel empty-state"><span class="empty-icon">♧</span><h3>{{ t.notifications_empty_title }}</h3><p>{{ t.notifications_empty_description }}</p></div>{% endfor %}
+</section>
+{% endblock %}

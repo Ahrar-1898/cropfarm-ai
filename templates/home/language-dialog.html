@@ -1,0 +1,50 @@
+<dialog class="language-dialog" id="languageDialog" aria-labelledby="languageDialogTitle"
+        data-coverage-complete="{{ t.translation_complete }}"
+        data-coverage-partial="{{ t.translation_partial }}"
+        data-coverage-fallback="{{ t.translation_fallback }}"
+        data-save-error="{{ t.language_save_error }}">
+    <div class="language-dialog-header">
+        <div>
+            <span class="language-dialog-kicker">CROPFARMAI</span>
+            <h2 id="languageDialogTitle">{{ t.choose_language_title }}</h2>
+            <p>{{ t.choose_language_description }}</p>
+        </div>
+        <button class="language-dialog-close" type="button" id="closeLanguageDialog"
+                aria-label="{{ t.close }}">×</button>
+    </div>
+    <label class="language-search-label" for="languageSearch">{{ t.search_language }}</label>
+    <input class="language-search" id="languageSearch" type="search" autocomplete="off"
+           placeholder="{{ t.search_language }}" aria-controls="languageOptions">
+    <div class="language-options" id="languageOptions" role="listbox"
+         aria-label="{{ t.choose_language_title }}">
+        {% for language in supported_languages %}
+        <button class="language-option" type="button" role="option"
+                aria-selected="{{ 'true' if language.code == current_language else 'false' }}"
+                data-language-code="{{ language.code }}"
+                data-language-name="{{ (language.name ~ ' ' ~ language.native_name)|lower }}"
+                data-translation-status="{{ translation_statuses.get(language.code, 'fallback') }}"
+                lang="{{ language.code }}" dir="{{ language.direction }}">
+            <span class="language-option-copy">
+                <strong>{{ language.native_name }}</strong>
+                <small>{{ language.name }}</small>
+            </span>
+            {% if translation_statuses.get(language.code, 'fallback') == 'fallback' %}
+                <span class="language-option-badge">English fallback</span>
+            {% elif translation_statuses.get(language.code) == 'partial' %}
+                <span class="language-option-badge">Partial</span>
+            {% endif %}
+            <span class="language-option-check" aria-hidden="true">✓</span>
+        </button>
+        {% endfor %}
+    </div>
+    <p class="language-coverage" id="languageCoverage" aria-live="polite"></p>
+    <p class="language-dialog-feedback" id="languageDialogFeedback" role="status" aria-live="polite"></p>
+    <form class="language-dialog-actions" id="languagePreferenceForm" method="post"
+          action="{{ url_for('set_language') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="language" id="selectedLanguage" value="">
+        <input type="hidden" name="onboarding_complete" value="true">
+        <button class="language-continue" type="submit" id="continueWithLanguage" disabled>{{ t.continue }}</button>
+        <button class="language-skip" type="button" id="skipLanguage">{{ t.skip_language }}</button>
+    </form>
+</dialog>

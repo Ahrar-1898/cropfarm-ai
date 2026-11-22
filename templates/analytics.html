@@ -1,0 +1,25 @@
+{% extends "app_base.html" %}
+{% block page_title %}Analytics | CropFarmAI{% endblock %}
+{% block workspace_content %}
+<section class="page-heading page-heading-row"><div><span class="eyebrow">YOUR FARM DATA</span><h1>Analytics</h1><p>Charts below summarize your saved detections and manually entered crop health.</p></div><a class="button button-outline button-small" href="{{ url_for('export_detections') }}">↓ Export CSV</a></section>
+<div class="analytics-filter"><span>Analysis period</span><nav aria-label="Select analytics period"><a class="{% if period == '7d' %}selected{% endif %}" href="{{ url_for('analytics', period='7d') }}">7 days</a><a class="{% if period == '30d' %}selected{% endif %}" href="{{ url_for('analytics', period='30d') }}">30 days</a><a class="{% if period == '3m' %}selected{% endif %}" href="{{ url_for('analytics', period='3m') }}">3 months</a><a class="{% if period == '6m' %}selected{% endif %}" href="{{ url_for('analytics', period='6m') }}">6 months</a><a class="{% if period == 'all' %}selected{% endif %}" href="{{ url_for('analytics', period='all') }}">All time</a></nav>
+    <form class="analytics-custom" method="get"><input type="hidden" name="period" value="custom"><label>From <input type="date" name="start" value="{{ start_date }}"></label><label>To <input type="date" name="end" value="{{ end_date }}"></label><button class="button button-outline button-small" type="submit">Apply</button></form>
+</div>
+<section class="analytics-grid">
+    <article class="panel chart-panel"><div class="panel-heading"><div><span class="eyebrow">MODEL OUTPUTS</span><h2>Disease detections</h2></div><span class="chart-total">{{ detections|length }}</span></div>
+        {% if disease_counts %}<div class="bar-chart">{% for name, count in disease_counts %}<div class="bar-row"><span title="{{ name }}">{{ name.replace('_', ' ') }}</span><div class="bar-track"><i style="width: {{ (count * 100 / disease_counts[0][1])|round|int }}%"></i></div><strong>{{ count }}</strong></div>{% endfor %}</div>{% else %}<div class="chart-empty">No saved detections for this period.</div>{% endif %}
+    </article>
+    <article class="panel chart-panel"><div class="panel-heading"><div><span class="eyebrow">CROP BREAKDOWN</span><h2>Analysis by crop</h2></div></div>
+        {% if crop_counts %}<div class="bar-chart">{% for name, count in crop_counts %}<div class="bar-row"><span>{{ name }}</span><div class="bar-track"><i style="width: {{ (count * 100 / crop_counts[0][1])|round|int }}%"></i></div><strong>{{ count }}</strong></div>{% endfor %}</div>{% else %}<div class="chart-empty">No crop analysis recorded yet.</div>{% endif %}
+    </article>
+    <article class="panel chart-panel"><div class="panel-heading"><div><span class="eyebrow">MANUAL CROP STATUS</span><h2>Health observations</h2></div></div>
+        <div class="health-distribution">{% for label, count in health_counts.items() %}<div><span class="health-dot {% if label == 'Healthy' %}health-good{% elif label in ['At risk', 'Needs attention'] %}health-risk{% else %}health-unknown{% endif %}"></span><span>{{ label }}</span><strong>{{ count }}</strong></div>{% endfor %}</div>
+        <p class="field-help">Based on crop statuses you entered; AI detections are not used to assign health status.</p>
+    </article>
+    <article class="panel chart-panel treatment-analytics"><div class="panel-heading"><div><span class="eyebrow">FOLLOW-UP LOG</span><h2>Treatment records</h2></div></div><strong>{{ treatment_count }}</strong><p>Actions logged against your detections.</p><a class="text-link" href="{{ url_for('history') }}">Review detection history →</a></article>
+    <article class="panel chart-panel"><div class="panel-heading"><div><span class="eyebrow">RECENT TREND</span><h2>Monthly detections</h2></div></div>
+        {% if monthly_counts %}<div class="bar-chart">{% for month, count in monthly_counts %}<div class="bar-row"><span>{{ month }}</span><div class="bar-track"><i style="width: {{ (count * 100 / monthly_counts|map(attribute=1)|max)|round|int }}%"></i></div><strong>{{ count }}</strong></div>{% endfor %}</div>{% else %}<div class="chart-empty">No monthly detection trend is available yet.</div>{% endif %}
+    </article>
+</section>
+<div class="notice notice-info"><strong>How to read this</strong><span>These are counts of saved model classifications and manual status entries—not predictions of yield, farm performance, or disease severity.</span></div>
+{% endblock %}

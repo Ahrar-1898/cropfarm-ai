@@ -1,0 +1,47 @@
+<section class="home-section home-services" id="services" dir="ltr" aria-labelledby="servicesTitle">
+    <div class="home-container">
+        <div class="home-section-heading">
+            <span class="home-eyebrow">SERVICES</span>
+            <h2 id="servicesTitle">Tools already connected to the CropFarmAI workspace.</h2>
+            <p>Explore features that are implemented in this installation. Availability of crop analysis depends on the bundled model.</p>
+        </div>
+        <div class="home-service-grid">
+            <article class="home-service">
+                <span class="home-service-number">01</span><span class="home-service-icon" aria-hidden="true">⌕</span>
+                <h3>AI crop scanner</h3>
+                <p>Submit a supported crop-leaf image to the configured classifier and review its predicted class and confidence score.</p>
+                <a href="{% if current_user.is_authenticated %}{{ url_for('scanner') }}{% else %}{{ url_for('register') }}{% endif %}">Open crop scanner <span aria-hidden="true">→</span></a>
+            </article>
+            <article class="home-service">
+                <span class="home-service-number">02</span><span class="home-service-icon" aria-hidden="true">✳</span>
+                <h3>Disease information</h3>
+                <p>Review the disease guidance available for model classes, including symptoms, prevention and treatment context.</p>
+                <a href="{{ url_for('crop_health') if current_user.is_authenticated else url_for('register') }}">Explore guidance <span aria-hidden="true">→</span></a>
+            </article>
+            <article class="home-service">
+                <span class="home-service-number">03</span><span class="home-service-icon" aria-hidden="true">▤</span>
+                <h3>Farm records</h3>
+                <p>Organize farms, fields, crops, planting details and manually recorded crop-health observations.</p>
+                <a href="{{ url_for('farms_page') if current_user.is_authenticated else url_for('register') }}">Explore farm records <span aria-hidden="true">→</span></a>
+            </article>
+            <article class="home-service">
+                <span class="home-service-number">04</span><span class="home-service-icon" aria-hidden="true">◷</span>
+                <h3>History and reports</h3>
+                <p>Return to your private scan history and download reports for saved analyses.</p>
+                <a href="{{ url_for('reports') if current_user.is_authenticated else url_for('register') }}">View reports <span aria-hidden="true">→</span></a>
+            </article>
+            <article class="home-service">
+                <span class="home-service-number">05</span><span class="home-service-icon" aria-hidden="true">⌁</span>
+                <h3>Farm operations</h3>
+                <p>Keep irrigation schedules and soil readings as records; this application does not control physical equipment.</p>
+                <a href="{{ url_for('irrigation') if current_user.is_authenticated else url_for('register') }}">Explore operations <span aria-hidden="true">→</span></a>
+            </article>
+            <article class="home-service">
+                <span class="home-service-number">06</span><span class="home-service-icon" aria-hidden="true">☼</span>
+                <h3>Weather context</h3>
+                <p>View Open-Meteo weather and forecast context for a configured location, where the provider is available.</p>
+                <a href="{{ url_for('weather') if current_user.is_authenticated else url_for('register') }}">View weather tools <span aria-hidden="true">→</span></a>
+            </article>
+        </div>
+    </div>
+</section>

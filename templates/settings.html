@@ -1,0 +1,9 @@
+{% extends "app_base.html" %}
+{% block page_title %}{{ t.language_settings_title }} | CropFarmAI{% endblock %}
+{% block workspace_content %}
+<section class="page-heading"><span class="eyebrow">PREFERENCES</span><h1>{{ t.language_settings_title }}</h1><p>{{ t.language_settings_description }}</p></section>
+<section class="panel settings-panel"><div><span class="eyebrow">{{ t.language|upper }}</span><h2>{{ t.language_settings_title }}</h2><p>{{ t.language_settings_description }}</p></div>
+    <form method="post" class="settings-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><label for="language">{{ t.language }}</label><select name="language" id="language">{% for language in supported_languages %}<option value="{{ language.code }}" {% if current_language == language.code %}selected{% endif %}>{{ language.native_name }}{% if language.native_name != language.name %} — {{ language.name }}{% endif %}{% if translation_statuses.get(language.code, 'fallback') == 'fallback' %} — English fallback{% elif translation_statuses.get(language.code) == 'partial' %} — Partial translation{% endif %}</option>{% endfor %}</select><p class="form-hint">{{ t.language_translation_notice }}</p><button class="button button-primary button-small" type="submit">{{ t.save_language_preference }}</button></form>
+</section>
+<div class="notice notice-info"><strong>{{ t.settings_theme_heading }}</strong><span>{{ t.settings_theme_description }}</span></div>
+{% endblock %}

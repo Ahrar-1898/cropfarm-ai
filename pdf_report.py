@@ -87,28 +87,22 @@ LANGUAGE_LABELS = {
 }
 
 
-def register_indian_font():
-
-    if not os.path.exists(FONT_PATH):
-        raise FileNotFoundError("Nirmala UI font was not found.")
+def register_indian_font(font_path=None):
+    font_path = font_path or os.getenv("REPORT_FONT_PATH") or FONT_PATH
+    if not os.path.isfile(font_path):
+        return "Helvetica"
 
     if FONT_NAME not in pdfmetrics.getRegisteredFontNames():
-        font = TTFont(
-            FONT_NAME,
-            FONT_PATH,
-            subfontIndex=0,
-            shapable=True
-        )
-
+        font = TTFont(FONT_NAME, font_path, subfontIndex=0, shapable=True)
         pdfmetrics.registerFont(font)
-
         pdfmetrics.registerFontFamily(
             FONT_NAME,
             normal=FONT_NAME,
             bold=FONT_NAME,
             italic=FONT_NAME,
-            boldItalic=FONT_NAME
+            boldItalic=FONT_NAME,
         )
+    return FONT_NAME
 
 
 def generate_pdf_report(
@@ -116,12 +110,14 @@ def generate_pdf_report(
     disease_name,
     confidence,
     disease_details,
-    language="en"
+    language="en",
+    font_path=None,
 ):
-
-    register_indian_font()
+    font_name = register_indian_font(font_path)
 
     language = language if language in LANGUAGE_LABELS else "en"
+    if font_name == "Helvetica" and language != "en":
+        language = "en"
     labels = LANGUAGE_LABELS[language]
 
     buffer = BytesIO()
@@ -140,7 +136,7 @@ def generate_pdf_report(
     title_style = ParagraphStyle(
         "ReportTitle",
         parent=styles["Title"],
-        fontName=FONT_NAME,
+        fontName=font_name,
         fontSize=20,
         leading=28,
         textColor=colors.HexColor("#247A3D"),
@@ -151,7 +147,7 @@ def generate_pdf_report(
     heading_style = ParagraphStyle(
         "SectionHeading",
         parent=styles["Heading2"],
-        fontName=FONT_NAME,
+        fontName=font_name,
         fontSize=13,
         leading=20,
         textColor=colors.HexColor("#247A3D"),
@@ -163,7 +159,7 @@ def generate_pdf_report(
     body_style = ParagraphStyle(
         "ReportBody",
         parent=styles["BodyText"],
-        fontName=FONT_NAME,
+        fontName=font_name,
         fontSize=10,
         leading=17,
         shaping=1

@@ -1,0 +1,19 @@
+<section class="home-section home-faq" id="faq" dir="ltr" aria-labelledby="faqTitle">
+    <div class="home-container home-faq-layout">
+        <div class="home-section-heading">
+            <span class="home-eyebrow">FREQUENTLY ASKED QUESTIONS</span>
+            <h2 id="faqTitle">Good to know before you begin.</h2>
+        </div>
+        <div class="home-faq-list">
+            <details><summary>How does crop scanning work?</summary><p>The authenticated scanner validates an uploaded image and sends it to the bundled TensorFlow classifier. The result is a model prediction and confidence score.</p></details>
+            <details><summary>Which crops are supported?</summary><p>{% if supported_crops %}The model's crop groups are {{ supported_crops|join(", ") }}. Images outside the training classes may not be identified reliably.{% else %}The crop classifier is not configured in this deployment, so image predictions are unavailable.{% endif %}</p></details>
+            <details><summary>Does the confidence score guarantee accuracy?</summary><p>No. It is the model's score for its selected class, not a probability that the result is correct or a confirmed diagnosis.</p></details>
+            <details><summary>What image should I upload?</summary><p>Use a clear, well-lit crop-leaf image. The server accepts JPG, JPEG, PNG and WebP uploads up to 10 MB.</p></details>
+            <details><summary>Where are my scans and images stored?</summary><p>Saved detections and uploaded images are associated with your account and are not visible to other farmer accounts.</p></details>
+            <details><summary>Can I use CropFarmAI on a phone?</summary><p>Yes. The Flask workspace is responsive for mobile and desktop browsers. A stable network is needed for hosted weather information.</p></details>
+            <details><summary>Which languages are fully translated?</summary><p>English, Hindi, Assamese and Bengali have translated welcome and core account, navigation and dashboard text. Other languages use English fallback where translations are not yet available.</p></details>
+            <details><summary>How does password recovery work?</summary><p>Password recovery uses a one-time email link when SMTP is configured. Email/SMS OTP delivery is not configured in this installation.</p></details>
+            <details><summary>Is an AI chat assistant available?</summary><p>No chat assistant is connected in this Flask installation. The public site does not advertise one as an available feature.</p></details>
+        </div>
+    </div>
+</section>

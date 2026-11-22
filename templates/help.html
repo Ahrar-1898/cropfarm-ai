@@ -1,0 +1,12 @@
+{% extends "app_base.html" %}
+{% block page_title %}Help & support | CropFarmAI{% endblock %}
+{% block workspace_content %}
+<section class="page-heading"><span class="eyebrow">HELP & SUPPORT</span><h1>How can we help?</h1><p>Practical notes for using the tools in this workspace.</p></section>
+<section class="help-grid">
+    <article class="panel help-card"><span class="help-icon">⌕</span><h2>Using the AI scanner</h2><p>Upload a clear leaf image in JPG, PNG, or WebP format (up to 10 MB). The bundled model classifies bell pepper, potato, and tomato classes only.</p></article>
+    <article class="panel help-card"><span class="help-icon">▣</span><h2>Your privacy</h2><p>Scans and uploaded images are stored under your account. Other farmer accounts cannot access them. You can delete an analysis and its files from its detail page.</p></article>
+    <article class="panel help-card"><span class="help-icon">✳</span><h2>Interpreting results</h2><p>Confidence is the classifier’s score for its selected class, not a medical-style certainty score. Verify symptoms and ask a local agricultural expert before treatment.</p></article>
+    <article class="panel help-card"><span class="help-icon">⌁</span><h2>Farm records</h2><p>Health status is an observation you enter, irrigation is a manually maintained schedule, and soil readings are labeled as manually recorded.</p></article>
+</section>
+<section class="contact-panel panel"><div><span class="eyebrow">NEED MORE HELP?</span><h2>Contact your CropFarmAI administrator</h2><p>For account or installation questions, contact the person who manages this deployment.</p></div></section>
+{% endblock %}

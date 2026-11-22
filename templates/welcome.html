@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}{{ t.welcome_title }} | CropFarmAI{% endblock %}
+{% block body_class %}welcome-page{% endblock %}
+{% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/welcome.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+{% endblock %}
+{% block content %}
+{% include "home/navigation.html" %}
+<main class="welcome-main"
+      data-language="{{ current_language }}"
+      data-language-direction="{{ current_language_direction }}"
+      data-translation-status="{{ translation_status }}"
+      data-language-prompt-done="{{ 'true' if language_prompt_done else 'false' }}"
+      data-language-onboarding-key="{{ language_onboarding_key }}">
+    {% include "home/hero.html" %}
+    {% include "home/sections/about.html" %}
+    {% include "home/sections/services.html" %}
+    {% include "home/sections/how-it-works.html" %}
+    {% include "home/sections/why-cropfarmai.html" %}
+    {% include "home/sections/platform-preview.html" %}
+    {% include "home/sections/audience.html" %}
+    {% include "home/sections/faq.html" %}
+    {% include "home/sections/get-started.html" %}
+    {% include "home/sections/contact.html" %}
+</main>
+<p class="welcome-network-feedback" id="languageGlobalFeedback" role="status" aria-live="polite"></p>
+{% include "home/footer.html" %}
+{% include "home/language-dialog.html" %}
+{% endblock %}
+{% block scripts %}
+<script defer src="{{ url_for('static', filename='js/home.js') }}"></script>
+<script defer src="{{ url_for('static', filename='js/welcome-animation-config.js') }}"></script>
+<script defer src="{{ url_for('static', filename='js/welcome.js') }}"></script>
+{% endblock %}

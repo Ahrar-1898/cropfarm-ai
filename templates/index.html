@@ -1,201 +1,90 @@
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>cropFarm AI | Smart Crop Protection</title>
-
-    <link rel="stylesheet"
-    href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-
-<body>
-
-    <!-- NAVIGATION -->
-    <nav class="navbar">
-        <div class="logo">🌱 CropFarm<span>AI</span></div>
-
-        <div class="nav-links">
-            <a href="#home">Home</a>
-            <a href="#about">About</a>
-            <a href="#features">Features</a>
-            <a href="#scanner">Crop Scanner</a>
+{% extends "base.html" %}
+{% block title %}CropFarmAI — Smarter Farming. Healthier Crops.{% endblock %}
+{% block content %}
+<header class="site-header">
+    <a class="brand" href="{{ url_for('home') }}" aria-label="CropFarmAI home"><span class="brand-mark">C</span><span>CropFarm<span class="brand-accent">AI</span></span></a>
+    <button class="mobile-menu public-menu-button" type="button" aria-label="Open menu" aria-expanded="false" id="publicMenuToggle">☰</button>
+    <nav class="public-nav" id="publicNav" aria-label="Main navigation">
+        <a href="#home">Home</a><a href="#about">About</a><a href="#features">Features</a><a href="#how-it-works">How it works</a><a href="#contact">Contact</a>
+        <div class="public-nav-mobile">
+            {% if current_user.is_authenticated %}<a href="{{ url_for('dashboard') }}">Workspace</a>{% else %}<a href="{{ url_for('login') }}">Sign in</a>{% endif %}
         </div>
-
-        <a href="#scanner" class="nav-button">Get Started →</a>
     </nav>
-
-    <!-- HERO SECTION -->
-    <section class="hero" id="home">
-
-        <div class="hero-content">
-
-            <span class="tag">✦ INTELLIGENT AGRICULTURE SYSTEM</span>
-
-            <h1>
-                Smarter Farming.<br>
-                <span>Healthier Crops.</span><br>
-                Better Future.
-            </h1>
-
-            <p>
-                Empowering farmers with Artificial Intelligence.
-                Detect crop diseases early, understand plant health
-                and make smarter agricultural decisions.
-            </p>
-
-            <div class="hero-buttons">
-                <a href="#scanner" class="primary-btn">
-                    Explore AI Scanner →
-                </a>
-
-                <a href="#about" class="secondary-btn">
-                    Discover More
-                </a>
+    <div class="header-actions">
+        {% if current_user.is_authenticated %}
+            <a class="button button-quiet" href="{{ url_for('dashboard') }}">My workspace</a>
+        {% else %}
+            <a class="header-login" href="{{ url_for('login') }}">Sign in</a>
+            <a class="button button-primary button-small" href="{{ url_for('register') }}">Get started <span>→</span></a>
+        {% endif %}
+    </div>
+</header>
+<main>
+    <section class="hero-section" id="home">
+        <div class="hero-copy">
+            <span class="eyebrow"><span class="eyebrow-dot"></span> INTELLIGENT AGRICULTURE, MADE PRACTICAL</span>
+            <h1>Smarter farming.<br><span>Healthier crops.</span><br>Better future.</h1>
+            <p>Make confident crop-care decisions with AI disease screening and a connected home for your farm records.</p>
+            <div class="hero-actions">
+                <a class="button button-primary" href="{% if current_user.is_authenticated %}{{ url_for('scanner') }}{% else %}{{ url_for('register') }}{% endif %}">Explore AI scanner <span>→</span></a>
+                <a class="button button-outline" href="#about">Discover CropFarmAI</a>
             </div>
-
-            <div class="hero-stats">
-                <div>
-                    <h3>AI</h3>
-                    <p>Powered Detection</p>
-                </div>
-
-                <div>
-                    <h3>Multi</h3>
-                    <p>Crop Support</p>
-                </div>
-
-                <div>
-                    <h3>24/7</h3>
-                    <p>Digital Access</p>
-                </div>
-            </div>
-
+            <div class="hero-proof"><span class="proof-icon">✳</span><span><strong>AI crop screening</strong><small>Powered by the included CropFarmAI model</small></span><i></i><span><strong>Farm-first workspace</strong><small>Keep your own observations in one place</small></span></div>
         </div>
-
-        <div class="hero-image">
-            <img
-            src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1000"
-            alt="Beautiful green agricultural field">
-
-            <div class="image-card">
-                <span>🌿</span>
-                <div>
-                    <strong>Smart Crop Protection</strong>
-                    <p>Powered by Deep Learning</p>
-                </div>
-            </div>
+        <div class="hero-visual">
+            <img class="hero-photo" src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1400&q=85" alt="Rows of crops growing in a green agricultural field">
+            <div class="photo-shade"></div>
+            <div class="hero-photo-label"><span class="live-dot"></span><span><strong>A healthier view of your farm</strong><small>Notice early. Plan thoughtfully.</small></span></div>
+            <div class="hero-float-card"><span class="float-icon">✦</span><span><small>SUPPORTED BY THE MODEL</small><strong>Tomato · Potato · Bell pepper</strong></span></div>
         </div>
-
     </section>
-
-    <!-- ABOUT SECTION -->
-    <section class="about" id="about">
-
-        <span class="section-tag">ABOUT OUR PROJECT</span>
-
-        <h2>Technology Meets <span>Agriculture</span></h2>
-
-        <p>
-            cropFarm AI is an intelligent multi-crop disease
-            detection system designed to identify crop diseases
-            from leaf images using deep learning techniques.
-            Our goal is to support smarter crop monitoring and
-            early disease identification.
-        </p>
-
+    <section class="trust-strip" aria-label="Platform capabilities">
+        <span>BUILT FOR EVERYDAY FARM DECISIONS</span><div><b>⌕</b> Image-based crop screening</div><div><b>▤</b> Farm and field records</div><div><b>◷</b> Private detection history</div>
     </section>
-
-    <!-- FEATURES SECTION -->
-    <section class="features" id="features">
-
-        <span class="section-tag">WHAT WE OFFER</span>
-
-        <h2>Powerful Features for <span>Smart Farming</span></h2>
-
+    <section class="section section-about" id="about">
+        <div class="section-kicker">OUR PURPOSE</div>
+        <div class="section-heading-row"><h2>Technology meets<br><span>the work of growing.</span></h2><p>CropFarmAI brings practical digital tools closer to the people who care for crops every day. Start with an image, keep useful records, and make the next decision with more context.</p></div>
+        <div class="about-note"><span class="about-mark">C</span><p><strong>Built to support—not replace—farmer judgement.</strong><br>AI outputs are guidance, not a confirmed diagnosis. Local conditions and expert advice still matter.</p></div>
+    </section>
+    <section class="section feature-section" id="features">
+        <div class="section-center"><div class="section-kicker">A CONNECTED FARM WORKSPACE</div><h2>Everything in its place.<br><span>More clarity in the field.</span></h2><p>Start with the capabilities that are available today. Add your farm context as you go.</p></div>
         <div class="feature-grid">
-
-            <div class="feature-card">
-                <div class="feature-icon">🔍</div>
-                <h3>AI Disease Detection</h3>
-                <p>
-                    Analyze crop leaf images and identify
-                    supported diseases using deep learning.
-                </p>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon">🌾</div>
-                <h3>Multi-Crop Analysis</h3>
-                <p>
-                    A unified platform designed to support
-                    multiple crop categories.
-                </p>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon">📊</div>
-                <h3>Smart Results</h3>
-                <p>
-                    View disease predictions and model
-                    confidence scores in a clear format.
-                </p>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon">💡</div>
-                <h3>Disease Guidance</h3>
-                <p>
-                    Access useful information about detected
-                    diseases and their management.
-                </p>
-            </div>
-
+            <article class="feature-card"><span class="feature-icon icon-green">⌕</span><h3>AI disease screening</h3><p>Analyze a crop leaf image with the included classifier and review its prediction and confidence.</p><a href="{% if current_user.is_authenticated %}{{ url_for('scanner') }}{% else %}{{ url_for('register') }}{% endif %}">Explore scanner <span>→</span></a></article>
+            <article class="feature-card"><span class="feature-icon icon-sage">▤</span><h3>Farm & field records</h3><p>Organize your farms, fields, crops, planting dates, and the health notes you enter.</p><a href="{{ url_for('register') }}">Create your workspace <span>→</span></a></article>
+            <article class="feature-card"><span class="feature-icon icon-amber">◷</span><h3>Private detection history</h3><p>Return to your past analysis, revisit disease guidance, and download a report.</p><a href="{{ url_for('register') }}">Get started <span>→</span></a></article>
+            <article class="feature-card"><span class="feature-icon icon-blue">⌁</span><h3>Operations & observations</h3><p>Keep irrigation schedules and manually recorded soil observations attached to your account.</p><a href="{{ url_for('register') }}">Set up your farm <span>→</span></a></article>
         </div>
-
     </section>
-
-    <!-- SCANNER SECTION -->
-    <section class="scanner" id="scanner">
-
-        <div class="scanner-content">
-
-            <span class="section-tag">AI CROP INTELLIGENCE</span>
-
-            <h2>Your Crops Deserve <span>Smart Protection</span></h2>
-
-            <p>
-                Our intelligent crop scanner will allow users
-                to upload leaf images and receive AI-powered
-                disease predictions.
-            </p>
-
-            <a href="/scanner" class="primary-btn">
-                Open Crop Scanner →
-            </a>
-
-            <p class="note">
-                AI scanning module is under development.
-            </p>
-
+    <section class="section how-section" id="how-it-works">
+        <div class="how-intro"><div class="section-kicker">A SIMPLE FIRST STEP</div><h2>From leaf photo<br>to a clearer next step.</h2><p>The classifier supports bell pepper, potato, and tomato categories. It may not identify unrelated plants or conditions outside its training classes.</p><a class="text-link" href="{% if current_user.is_authenticated %}{{ url_for('scanner') }}{% else %}{{ url_for('register') }}{% endif %}">Try crop screening <span>→</span></a></div>
+        <div class="steps">
+            <article class="step"><span>01</span><div><h3>Choose a clear image</h3><p>Upload a well-lit JPG, PNG, or WebP leaf photo. Avoid images over 10 MB.</p></div><b>↑</b></article>
+            <article class="step"><span>02</span><div><h3>Review the model result</h3><p>The existing CropFarmAI model returns one of its learned classes and a confidence score.</p></div><b>✳</b></article>
+            <article class="step"><span>03</span><div><h3>Use the context wisely</h3><p>Read the available disease guidance, save the result to your history, and consult an expert before treatment.</p></div><b>✓</b></article>
         </div>
-
     </section>
-
-    <!-- FOOTER -->
-    <footer>
-        <h3>🌱 cropFarm AI</h3>
-
-        <p>
-            Intelligent Crop Disease Detection Using Deep Learning
-        </p>
-
-        <p class="copyright">
-            © 2026 cropFarm AI | B.Tech Final Year Group Project
-        </p>
-    </footer>
-
-</body>
-</html>
+    <section class="supported-section"><div><span class="section-kicker">MODEL CLASS COVERAGE</span><h2>Start with the crops<br>your model knows.</h2></div><div class="crop-pills">{% for crop in supported_crops %}<span><i>✳</i>{{ crop }}</span>{% else %}<p>The disease model is not currently available.</p>{% endfor %}</div></section>
+    <section class="closing-section" id="contact"><div><span class="section-kicker eyebrow-light">YOUR FARM, YOUR RECORDS</span><h2>Grow with a little<br>more confidence.</h2><p>Create a private workspace for crop checks and everyday farm records.</p></div><a class="button button-light" href="{% if current_user.is_authenticated %}{{ url_for('dashboard') }}{% else %}{{ url_for('register') }}{% endif %}">Get started <span>→</span></a></section>
+</main>
+<footer class="site-footer">
+    <a class="brand brand-footer" href="{{ url_for('home') }}"><span class="brand-mark">C</span><span>CropFarm<span class="brand-accent">AI</span></span></a>
+    <p>Smarter Farming. Healthier Crops. Better Future.</p>
+    <span>AI analysis is informational and should be confirmed with local agricultural expertise.</span>
+    <small>© 2026 CropFarmAI</small>
+</footer>
+{% endblock %}
+{% block scripts %}
+<script>
+    const publicMenuToggle = document.getElementById("publicMenuToggle");
+    const publicNav = document.getElementById("publicNav");
+    if (publicMenuToggle && publicNav) {
+        publicMenuToggle.addEventListener("click", () => {
+            const open = publicNav.classList.toggle("public-nav-open");
+            publicMenuToggle.setAttribute("aria-expanded", String(open));
+        });
+        publicNav.querySelectorAll("a").forEach((link) => {
+            link.addEventListener("click", () => publicNav.classList.remove("public-nav-open"));
+        });
+    }
+</script>
+{% endblock %}
