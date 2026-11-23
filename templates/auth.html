@@ -26,7 +26,7 @@
                     <label>{{ t.auth_email }}<input name="email" type="email" autocomplete="email" maxlength="254" value="{{ request.form.get('email', '') }}" required></label>
                     <div class="form-row">
                         <label>{{ t.auth_phone }} <span class="optional">({{ t.auth_optional }})</span><input name="phone" type="tel" autocomplete="tel" value="{{ request.form.get('phone', '') }}"></label>
-                        <label>{{ t.auth_location }} <span class="optional">({{ t.auth_optional }})</span><input name="location" autocomplete="address-level2" value="{{ request.form.get('location', '') }}"></label>
+                        <label>{{ t.auth_location }}<input name="location" autocomplete="street-address" maxlength="180" value="{{ request.form.get('location', '') }}" required></label>
                     </div>
                     <label>{{ t.auth_farm }} <span class="optional">({{ t.auth_optional }})</span><input name="farm_name" value="{{ request.form.get('farm_name', '') }}"></label>
                     <div class="form-row">

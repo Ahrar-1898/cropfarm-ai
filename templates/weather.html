@@ -2,18 +2,17 @@
 {% block page_title %}Weather | CropFarmAI{% endblock %}
 {% block workspace_content %}
 <section class="page-heading"><span class="eyebrow">LOCAL CONDITIONS</span><h1>Weather</h1><p>Live conditions and a seven-day forecast from Open-Meteo.</p></section>
-<form method="get" action="{{ url_for('weather') }}" class="panel weather-location-form">
-    <label for="weatherLocation">Location</label>
-    <input id="weatherLocation" name="location" value="{{ location }}" maxlength="120" placeholder="City or town" required>
-    <button class="button button-primary button-small" type="submit">Update weather</button>
-</form>
 {% if weather_report %}
-<section class="weather-card panel"><div><span class="eyebrow">CURRENT CONDITIONS · {{ weather_report.current.time }} {{ weather_report.timezone or '' }}</span><h2>{{ weather_report.location }}</h2><p>{{ weather_report.current.condition }}</p></div><strong class="weather-temp">{{ weather_report.current.temperature_c|round(1) }}<sup>°C</sup></strong></section>
+<section class="weather-card panel"><div><span class="eyebrow">CURRENT CONDITIONS · {{ weather_report.details.last_updated }} {{ weather_report.timezone or '' }}</span><h2>{{ weather_report.location }}</h2><p>{{ weather_report.current.condition }} — {{ weather_report.latitude|round(4) }}, {{ weather_report.longitude|round(4) }}</p></div><strong class="weather-temp" aria-label="Weather icon">{{ weather_report.details.icon }}</strong><strong class="weather-temp">{{ weather_report.current.temperature_c|round(1) }}<sup>°C</sup></strong></section>
 <section class="stat-grid weather-stats">
     <article class="stat-card"><span class="stat-label">Feels like</span><strong>{{ weather_report.current.apparent_temperature_c|round(1) }}°C</strong><small>Provider-reported</small></article>
     <article class="stat-card"><span class="stat-label">Humidity</span><strong>{{ weather_report.current.humidity_pct|round|int }}%</strong><small>Provider-reported</small></article>
-    <article class="stat-card"><span class="stat-label">Wind speed</span><strong>{{ weather_report.current.wind_speed_kmh|round(1) }} km/h</strong><small>Provider-reported</small></article>
-    <article class="stat-card"><span class="stat-label">Precipitation</span><strong>{{ weather_report.current.precipitation_mm|round(1) }} mm</strong><small>Current interval</small></article>
+    <article class="stat-card"><span class="stat-label">Wind</span><strong>{{ weather_report.current.wind_speed_kmh|round(1) }} km/h</strong><small>{{ weather_report.details.wind_direction_degrees|round|int if weather_report.details.wind_direction_degrees is not none else 'Direction unavailable' }}°</small></article>
+    <article class="stat-card"><span class="stat-label">Rainfall</span><strong>{{ weather_report.details.rainfall_mm|round(1) if weather_report.details.rainfall_mm is not none else weather_report.current.precipitation_mm|round(1) }} mm</strong><small>Provider-reported</small></article>
+    <article class="stat-card"><span class="stat-label">Pressure</span><strong>{{ weather_report.details.pressure_hpa|round|int if weather_report.details.pressure_hpa is not none else 'Unavailable' }}{% if weather_report.details.pressure_hpa is not none %} hPa{% endif %}</strong><small>Provider-reported</small></article>
+    <article class="stat-card"><span class="stat-label">Cloud cover</span><strong>{{ weather_report.details.cloud_cover_pct|round|int if weather_report.details.cloud_cover_pct is not none else 'Unavailable' }}{% if weather_report.details.cloud_cover_pct is not none %}%{% endif %}</strong><small>Provider-reported</small></article>
+    <article class="stat-card"><span class="stat-label">Sunrise</span><strong>{{ weather_report.details.sunrise or 'Unavailable' }}</strong><small>Local time</small></article>
+    <article class="stat-card"><span class="stat-label">Sunset</span><strong>{{ weather_report.details.sunset or 'Unavailable' }}</strong><small>Local time</small></article>
 </section>
 <section class="panel weather-forecast">
     <div class="panel-heading"><div><span class="eyebrow">NEXT SEVEN DAYS</span><h2>Forecast</h2></div></div>
@@ -23,8 +22,9 @@
         {% endfor %}
     </div>
 </section>
-<p class="weather-attribution">Weather and geocoding data by <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a>.</p>
+<p class="weather-attribution">Weather and geocoding data by <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a>. Last updated: {{ weather_report.details.last_updated }}</p>
+<script>setInterval(function () { window.location.reload(); }, 15 * 60 * 1000);</script>
 {% else %}
-<section class="panel weather-empty"><span class="weather-empty-icon">☼</span><span class="eyebrow">LIVE DATA UNAVAILABLE</span><h2>Weather could not be loaded</h2><p>{{ weather_error }}</p><p class="field-help">Open-Meteo does not require an API key. Enter a city above or add a default location in your profile.</p><a class="button button-outline button-small" href="{{ url_for('profile') }}">Update profile location</a></section>
+<section class="panel weather-empty"><span class="weather-empty-icon">☼</span><span class="eyebrow">LIVE DATA UNAVAILABLE</span><h2>Weather could not be loaded</h2><p>{{ weather_error }}</p><p class="field-help">Weather is loaded automatically from your registered address.</p><a class="button button-outline button-small" href="{{ url_for('profile') }}">Update profile address</a></section>
 {% endif %}
 {% endblock %}

@@ -20,6 +20,8 @@ class User(UserMixin, db.Model):
     role = db.Column(db.String(20), nullable=False, default="farmer")
     profile_image = db.Column(db.String(500))
     location = db.Column(db.String(180))
+    latitude = db.Column(db.Float)
+    longitude = db.Column(db.Float)
     language = db.Column(db.String(8), nullable=False, default="en")
     language_onboarding_done = db.Column(
         db.Boolean, nullable=False, default=False, server_default=sa.true()

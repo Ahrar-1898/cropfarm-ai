@@ -38,7 +38,12 @@ from werkzeug.utils import secure_filename
 from extensions import csrf, db, limiter, login_manager, migrate
 from api import api_v1
 from integrations.email_delivery import send_email_message, smtp_is_configured
-from integrations.weather import WeatherIntegrationError, get_irrigation_advisory, get_weather_report
+from integrations.weather import (
+    WeatherIntegrationError,
+    get_irrigation_advisory,
+    get_weather_report,
+    resolve_location,
+)
 from models import (
     Crop,
     DetectionImage,
@@ -148,7 +153,6 @@ def create_app(test_config=None):
         SESSION_COOKIE_SECURE=os.getenv("COOKIE_SECURE", "false").lower() == "true",
         RATELIMIT_STORAGE_URI=os.getenv("RATELIMIT_STORAGE_URI", "memory://"),
         PERMANENT_SESSION_LIFETIME=timedelta(days=14),
-        WEATHER_LOCATION=os.getenv("WEATHER_LOCATION"),
         SMTP_HOST=os.getenv("SMTP_HOST"),
         SMTP_PORT=int(os.getenv("SMTP_PORT", "587")),
         SMTP_USER=os.getenv("SMTP_USER"),
@@ -439,17 +443,36 @@ def create_app(test_config=None):
                 )
             if password != confirm_password:
                 errors.append("The passwords do not match.")
+            if not location:
+                errors.append("Enter a valid registered address.")
+            elif len(location) > 180:
+                errors.append("The address must be no more than 180 characters.")
+            elif len(location) < 3:
+                errors.append("Enter a complete registered address.")
 
             if errors:
                 for error in errors:
                     flash(error, "error")
                 return render_template("auth.html", mode="register")
 
+            try:
+                resolved_location = resolve_location(location)
+            except WeatherIntegrationError as error:
+                if error.code == "ambiguous_location":
+                    flash("The address is ambiguous. Add a village, town, district, state, or pin code.", "error")
+                elif error.code == "location_not_found":
+                    flash("We could not find that address. Correct or clarify the registered address.", "error")
+                else:
+                    flash("The address could not be verified. Check it and try again.", "error")
+                return render_template("auth.html", mode="register")
+
             user = User(
                 full_name=full_name,
                 email=email,
                 phone=phone or None,
-                location=location or None,
+                location=location,
+                latitude=resolved_location["latitude"],
+                longitude=resolved_location["longitude"],
                 role="farmer",
                 language=(
                     request.cookies.get("cropfarm_language", "en")
@@ -470,7 +493,7 @@ def create_app(test_config=None):
             db.session.commit()
             login_user(user)
             flash("Your CropFarmAI account is ready.", "success")
-            return redirect(url_for("dashboard"))
+            return redirect(url_for("weather"))
         return render_template("auth.html", mode="register")
 
     @app.route("/login", methods=["GET", "POST"])
@@ -1228,15 +1251,22 @@ def create_app(test_config=None):
 
     def load_weather(location):
         if not location:
-            return None, "Add a location to your profile or .env to see weather context."
+            return None, "Add a complete registered address to your profile to see weather."
         try:
-            return get_weather_report(location), None
+            return get_weather_report(
+                location,
+                latitude=current_user.latitude,
+                longitude=current_user.longitude,
+                resolved_location=current_user.location,
+            ), None
         except WeatherIntegrationError as error:
             current_app.logger.warning("Weather integration failed (%s).", error.code)
             if error.code == "location_not_found":
                 return None, "No matching location was found. Check the spelling and try again."
             if error.code == "invalid_location":
                 return None, "Enter a location with no more than 120 characters."
+            if error.code == "ambiguous_location":
+                return None, "The address is ambiguous. Please add a district or state."
             return None, "Live weather is currently unavailable. Try again later."
 
     @app.route("/irrigation", methods=["GET", "POST"])
@@ -1283,10 +1313,7 @@ def create_app(test_config=None):
             .all()
         )
         location = (
-            request.args.get("location", "").strip()
-            or current_user.location
-            or current_app.config.get("WEATHER_LOCATION")
-            or ""
+            current_user.location or ""
         )
         weather_report, weather_error = load_weather(location)
         return render_template(
@@ -1395,12 +1422,7 @@ def create_app(test_config=None):
     @app.route("/weather")
     @login_required
     def weather():
-        location = (
-            request.args.get("location", "").strip()
-            or current_user.location
-            or current_app.config.get("WEATHER_LOCATION")
-            or ""
-        )
+        location = current_user.location or ""
         weather_report, weather_error = load_weather(location)
         return render_template(
             "weather.html",
@@ -1598,6 +1620,8 @@ def create_app(test_config=None):
             new_password = request.form.get("new_password", "")
             if not name or not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
                 flash("Enter a valid name and email address.", "error")
+            elif not location or len(location) > 180 or len(location) < 3:
+                flash("Enter a valid complete registered address.", "error")
             elif User.query.filter(
                 func.lower(User.email) == email, User.id != current_user.id
             ).first():
@@ -1614,10 +1638,23 @@ def create_app(test_config=None):
                     "error",
                 )
             else:
+                if location != current_user.location:
+                    try:
+                        resolved_location = resolve_location(location)
+                    except WeatherIntegrationError as error:
+                        if error.code == "ambiguous_location":
+                            flash("The address is ambiguous. Add a village, town, district, state, or pin code.", "error")
+                        elif error.code == "location_not_found":
+                            flash("We could not find that address. Correct or clarify it.", "error")
+                        else:
+                            flash("The address could not be verified. Check it and try again.", "error")
+                        return redirect(url_for("profile"))
+                    current_user.latitude = resolved_location["latitude"]
+                    current_user.longitude = resolved_location["longitude"]
                 current_user.full_name = name
                 current_user.email = email
                 current_user.phone = phone or None
-                current_user.location = location or None
+                current_user.location = location
                 if new_password:
                     current_user.set_password(new_password)
                 db.session.commit()

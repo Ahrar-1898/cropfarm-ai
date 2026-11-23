@@ -8,6 +8,7 @@ import requests
 
 
 GEOCODING_URL = "https://geocoding-api.open-meteo.com/v1/search"
+NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
 FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
 REQUEST_TIMEOUT = 8
 CACHE_SECONDS = 900
@@ -99,19 +100,176 @@ def _condition(code):
         return "Unknown conditions"
 
 
-def _fetch_weather_report(location):
-    geocoding = _request_json(
-        GEOCODING_URL,
-        {"name": location, "count": 1, "language": "en", "format": "json"},
+def _weather_icon(code):
+    if isinstance(code, bool):
+        return "☁"
+    try:
+        value = int(code)
+    except (TypeError, ValueError):
+        return "☁"
+    if value == 0:
+        return "☀"
+    if value in (1, 2):
+        return "⛅"
+    if value == 3:
+        return "☁"
+    if value in (45, 48):
+        return "🌫"
+    if value in (51, 53, 55, 56, 57, 61, 63, 66, 80, 81):
+        return "🌦"
+    if value in (65, 67, 82):
+        return "🌧"
+    if value in (71, 73, 75, 77, 85, 86):
+        return "❄"
+    if value in (95, 96, 99):
+        return "⛈"
+    return "☁"
+
+
+def _expanded_location(location):
+    expanded = location.strip()
+    replacements = (
+        (r"\bUP\b", "Uttar Pradesh"),
+        (r"\bNCR\b", "National Capital Region"),
+        (r"\bU.P.\b", "Uttar Pradesh"),
     )
-    results = geocoding.get("results")
-    if not isinstance(results, list) or not results:
-        raise WeatherIntegrationError("location_not_found")
-    place = results[0]
-    if not isinstance(place, dict):
-        raise WeatherIntegrationError("invalid_provider_response")
-    latitude = _number(place.get("latitude"))
-    longitude = _number(place.get("longitude"))
+    for pattern, replacement in replacements:
+        import re
+        expanded = re.sub(pattern, replacement, expanded, flags=re.IGNORECASE)
+    if "india" not in expanded.casefold():
+        expanded = f"{expanded}, India"
+    return expanded
+
+
+def resolve_location(location):
+    normalized_location = location.strip() if isinstance(location, str) else ""
+    if not normalized_location:
+        raise WeatherIntegrationError("location_required")
+    if len(normalized_location) > 120:
+        raise WeatherIntegrationError("invalid_location")
+    if len(normalized_location) < 3:
+        raise WeatherIntegrationError("invalid_location")
+
+    attempts = [normalized_location]
+    expanded = _expanded_location(normalized_location)
+    if expanded.casefold() != normalized_location.casefold():
+        attempts.append(expanded)
+
+    for attempt in attempts:
+        try:
+            geocoding = _request_json(
+                GEOCODING_URL,
+                {"name": attempt, "count": 5, "language": "en", "format": "json"},
+            )
+        except WeatherIntegrationError:
+            geocoding = {}
+        results = geocoding.get("results")
+        if not isinstance(results, list) or not results:
+            try:
+                response = requests.get(
+                    NOMINATIM_URL,
+                    params={
+                        "q": attempt,
+                        "format": "jsonv2",
+                        "addressdetails": 1,
+                        "limit": 5,
+                        "countrycodes": "in",
+                    },
+                    headers={"User-Agent": "CropFarmAI/1.0"},
+                    timeout=REQUEST_TIMEOUT,
+                )
+                response.raise_for_status()
+                fallback_results = response.json()
+            except (requests.RequestException, ValueError) as error:
+                raise WeatherIntegrationError("provider_unavailable") from error
+            if not isinstance(fallback_results, list) or not fallback_results:
+                continue
+            candidates = []
+            for result in fallback_results:
+                if not isinstance(result, dict):
+                    continue
+                address = result.get("address") if isinstance(result.get("address"), dict) else {}
+                candidates.append({
+                    "name": result.get("name") or address.get("state_district") or address.get("county") or address.get("city"),
+                    "latitude": result.get("lat"),
+                    "longitude": result.get("lon"),
+                    "country": address.get("country"),
+                    "admin1": address.get("state"),
+                })
+            if len(candidates) > 1:
+                top_name = str(candidates[0].get("name", "")).casefold()
+                second_name = str(candidates[1].get("name", "")).casefold()
+                if top_name and top_name == second_name:
+                    raise WeatherIntegrationError("ambiguous_location")
+            top = candidates[0]
+            latitude = _number(top.get("latitude"))
+            longitude = _number(top.get("longitude"))
+            place_name = top.get("name")
+            if not isinstance(place_name, str) or not place_name.strip():
+                place_name = attempt
+            parts = [place_name]
+            if top.get("admin1") and top["admin1"] != place_name:
+                parts.append(top["admin1"])
+            if top.get("country"):
+                parts.append(top["country"])
+            return {
+                "latitude": latitude,
+                "longitude": longitude,
+                "location": ", ".join(parts),
+                "name": place_name,
+            }
+
+        candidates = [place for place in results if isinstance(place, dict)]
+        india_text = "india" in attempt.casefold()
+        if india_text:
+            india_candidates = [
+                place for place in candidates
+                if str(place.get("country_code", "")).upper() == "IN"
+            ]
+            if india_candidates:
+                candidates = india_candidates
+        if not candidates:
+            continue
+
+        top = candidates[0]
+        if len(candidates) > 1:
+            top_name = str(top.get("name", "")).casefold()
+            second_name = str(candidates[1].get("name", "")).casefold()
+            top_admin = str(top.get("admin1", "")).casefold()
+            second_admin = str(candidates[1].get("admin1", "")).casefold()
+            if top_name == second_name and top_admin == second_admin:
+                raise WeatherIntegrationError("ambiguous_location")
+
+        latitude = _number(top.get("latitude"))
+        longitude = _number(top.get("longitude"))
+        place_name = top.get("name")
+        if not isinstance(place_name, str) or not place_name.strip():
+            raise WeatherIntegrationError("invalid_provider_response")
+        country = top.get("country")
+        admin1 = top.get("admin1")
+        location_parts = [place_name]
+        if admin1 and admin1 != place_name:
+            location_parts.append(admin1)
+        if country:
+            location_parts.append(country)
+        return {
+            "latitude": latitude,
+            "longitude": longitude,
+            "location": ", ".join(location_parts),
+            "name": place_name,
+        }
+
+    raise WeatherIntegrationError("location_not_found")
+
+
+def _fetch_weather_report(location, latitude=None, longitude=None, resolved_location=None):
+    if latitude is None or longitude is None:
+        place = resolve_location(location)
+        latitude = place["latitude"]
+        longitude = place["longitude"]
+        resolved_location = place["location"]
+    if not resolved_location:
+        resolved_location = location
     forecast = _request_json(
         FORECAST_URL,
         {
@@ -119,11 +277,12 @@ def _fetch_weather_report(location):
             "longitude": longitude,
             "current": (
                 "temperature_2m,relative_humidity_2m,apparent_temperature,"
-                "precipitation,weather_code,wind_speed_10m,is_day"
+                "precipitation,rain,weather_code,wind_speed_10m,"
+                "wind_direction_10m,surface_pressure,cloud_cover,is_day"
             ),
             "daily": (
                 "weather_code,precipitation_probability_max,precipitation_sum,"
-                "et0_fao_evapotranspiration"
+                "et0_fao_evapotranspiration,sunrise,sunset"
             ),
             "timezone": "auto",
             "forecast_days": 7,
@@ -142,7 +301,15 @@ def _fetch_weather_report(location):
     daily_probabilities = daily.get("precipitation_probability_max")
     daily_precipitation = daily.get("precipitation_sum")
     daily_et0 = daily.get("et0_fao_evapotranspiration")
-    arrays = (daily_dates, daily_codes, daily_probabilities, daily_precipitation, daily_et0)
+    daily_sunrise = daily.get("sunrise")
+    daily_sunset = daily.get("sunset")
+    arrays = (
+        daily_dates,
+        daily_codes,
+        daily_probabilities,
+        daily_precipitation,
+        daily_et0,
+    )
     if not all(isinstance(values, list) for values in arrays):
         raise WeatherIntegrationError("invalid_provider_response")
     if len({len(values) for values in arrays}) != 1 or not daily_dates:
@@ -165,6 +332,20 @@ def _fetch_weather_report(location):
     for index, forecast_date in enumerate(daily_dates):
         if not isinstance(forecast_date, str):
             raise WeatherIntegrationError("invalid_provider_response")
+        sunrise = (
+            daily_sunrise[index]
+            if isinstance(daily_sunrise, list)
+            and index < len(daily_sunrise)
+            and isinstance(daily_sunrise[index], str)
+            else None
+        )
+        sunset = (
+            daily_sunset[index]
+            if isinstance(daily_sunset, list)
+            and index < len(daily_sunset)
+            and isinstance(daily_sunset[index], str)
+            else None
+        )
         forecast_days.append(
             {
                 "date": forecast_date,
@@ -174,41 +355,69 @@ def _fetch_weather_report(location):
                 ),
                 "precipitation_mm": _number(daily_precipitation[index], optional=True),
                 "et0_mm": _number(daily_et0[index], optional=True),
+                "sunrise": sunrise,
+                "sunset": sunset,
             }
         )
 
-    place_name = place.get("name")
-    if not isinstance(place_name, str) or not place_name.strip():
-        raise WeatherIntegrationError("invalid_provider_response")
-    country = place.get("country")
-    display_location = f"{place_name}, {country}" if country else place_name
+    weather_code = current.get("weather_code")
     return {
         "provider": "Open-Meteo",
-        "location": display_location,
+        "location": resolved_location,
         "timezone": forecast.get("timezone"),
+        "latitude": latitude,
+        "longitude": longitude,
         "current": current_data,
         "forecast": forecast_days,
+        "details": {
+            "weather_code": weather_code,
+            "icon": _weather_icon(weather_code),
+            "rainfall_mm": _number(current.get("rain"), optional=True),
+            "pressure_hpa": _number(current.get("surface_pressure"), optional=True),
+            "cloud_cover_pct": _number(current.get("cloud_cover"), optional=True),
+            "wind_direction_degrees": _number(current.get("wind_direction_10m"), optional=True),
+            "sunrise": forecast_days[0]["sunrise"] if forecast_days else None,
+            "sunset": forecast_days[0]["sunset"] if forecast_days else None,
+            "last_updated": current.get("time"),
+        },
     }
 
 
-def get_weather_report(location):
+def get_weather_report(location=None, latitude=None, longitude=None, resolved_location=None):
     normalized_location = location.strip() if isinstance(location, str) else ""
-    if not normalized_location:
+    if normalized_location:
+        if len(normalized_location) > 120:
+            raise WeatherIntegrationError("invalid_location")
+    elif latitude is None or longitude is None:
         raise WeatherIntegrationError("location_required")
-    if len(normalized_location) > 120:
-        raise WeatherIntegrationError("invalid_location")
 
-    cache_key = normalized_location.casefold()
+    cache_key = (
+        f"{float(latitude):.5f},{float(longitude):.5f}"
+        if latitude is not None and longitude is not None
+        else normalized_location.casefold()
+    )
     now = time.monotonic()
     with _cache_lock:
         cached = _weather_cache.get(cache_key)
         if cached and now - cached[0] < CACHE_SECONDS:
             return cached[1]
 
-    report = _fetch_weather_report(normalized_location)
-    with _cache_lock:
-        _weather_cache[cache_key] = (time.monotonic(), report)
-    return report
+    try:
+        report = _fetch_weather_report(
+            normalized_location,
+            latitude=latitude,
+            longitude=longitude,
+            resolved_location=resolved_location,
+        )
+        with _cache_lock:
+            _weather_cache[cache_key] = (time.monotonic(), report)
+        return report
+    except WeatherIntegrationError:
+        with _cache_lock:
+            stale = _weather_cache.get(cache_key)
+        if stale:
+            return stale[1]
+        raise
 
 
 def get_irrigation_advisory(weather_report):

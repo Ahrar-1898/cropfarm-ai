@@ -34,16 +34,16 @@ def api_http_error(error):
 
 
 def _request_weather_report():
-    location = (
-        request.args.get("location", "").strip()
-        or current_user.location
-        or current_app.config.get("WEATHER_LOCATION")
-        or ""
-    )
+    location = current_user.location or ""
     if not location:
         return None, (jsonify(error="location_required"), 400)
     try:
-        return get_weather_report(location), None
+        return get_weather_report(
+            location,
+            latitude=current_user.latitude,
+            longitude=current_user.longitude,
+            resolved_location=current_user.location,
+        ), None
     except WeatherIntegrationError as error:
         if error.code in {"location_required", "invalid_location"}:
             status = 400

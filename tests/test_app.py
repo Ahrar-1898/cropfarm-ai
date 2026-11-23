@@ -33,7 +33,6 @@ class CropFarmAppTests(unittest.TestCase):
                 "WTF_CSRF_ENABLED": False,
                 "RATELIMIT_ENABLED": False,
                 "SECRET_KEY": "test-key-not-for-production",
-                "WEATHER_LOCATION": "",
                 "SQLALCHEMY_DATABASE_URI": f"sqlite:///{os.path.join(root, 'test.db')}",
                 "AUTO_CREATE_DB": True,
                 "UPLOAD_FOLDER": os.path.join(root, "uploads"),
@@ -67,25 +66,78 @@ class CropFarmAppTests(unittest.TestCase):
         )
 
     def test_registration_hashes_password_and_opens_workspace(self):
-        response = self.client.post(
-            "/register",
-            data={
-                "full_name": "A Farmer",
-                "email": "new-farmer@example.test",
-                "password": "secure-password-123",
-                "confirm_password": "secure-password-123",
-                "farm_name": "Green Acres",
-                "location": "North District",
+        weather_report = {
+            "provider": "Open-Meteo",
+            "location": "Ambedkar Nagar, Uttar Pradesh, India",
+            "timezone": "Asia/Kolkata",
+            "latitude": 26.4045941,
+            "longitude": 82.6065154,
+            "current": {
+                "time": "2026-11-24T00:00",
+                "temperature_c": 16.7,
+                "apparent_temperature_c": 16.0,
+                "humidity_pct": 70,
+                "precipitation_mm": 0,
+                "wind_speed_kmh": 8,
+                "condition": "Clear sky",
+                "is_day": True,
             },
-            follow_redirects=True,
-        )
+            "forecast": [],
+            "details": {
+                "icon": "☀",
+                "rainfall_mm": 0,
+                "pressure_hpa": 1008,
+                "cloud_cover_pct": 0,
+                "wind_direction_degrees": 180,
+                "sunrise": "2026-11-24T06:20",
+                "sunset": "2026-11-24T17:20",
+                "last_updated": "2026-11-24T00:00",
+            },
+        }
+        with patch("app.resolve_location", return_value={
+            "latitude": 26.4045941,
+            "longitude": 82.6065154,
+            "location": "Ambedkar Nagar, Uttar Pradesh, India",
+        }), patch("app.get_weather_report", return_value=weather_report):
+            response = self.client.post(
+                "/register",
+                data={
+                    "full_name": "A Farmer",
+                    "email": "new-farmer@example.test",
+                    "password": "secure-password-123",
+                    "confirm_password": "secure-password-123",
+                    "farm_name": "Green Acres",
+                    "location": "Ambedkar Nagar, UP",
+                },
+                follow_redirects=True,
+            )
         self.assertEqual(response.status_code, 200)
-        self.assertIn(b"FARM OVERVIEW", response.data)
+        self.assertIn(b"LOCAL CONDITIONS", response.data)
         with self.application.app_context():
             user = User.query.filter_by(email="new-farmer@example.test").one()
             self.assertNotEqual(user.password_hash, "secure-password-123")
             self.assertTrue(user.check_password("secure-password-123"))
             self.assertEqual(len(user.farms), 1)
+            self.assertEqual(user.location, "Ambedkar Nagar, UP")
+            self.assertEqual(user.latitude, 26.4045941)
+            self.assertEqual(user.longitude, 82.6065154)
+
+    def test_registration_requires_address(self):
+        response = self.client.post(
+            "/register",
+            data={
+                "full_name": "A Farmer",
+                "email": "no-address@example.test",
+                "password": "secure-password-123",
+                "confirm_password": "secure-password-123",
+            },
+            follow_redirects=True,
+        )
+        self.assertIn(b"Enter a valid registered address.", response.data)
+        with self.application.app_context():
+            self.assertIsNone(
+                User.query.filter_by(email="no-address@example.test").first()
+            )
 
     def test_welcome_page_keeps_existing_product_overview_available(self):
         response = self.client.get("/")
