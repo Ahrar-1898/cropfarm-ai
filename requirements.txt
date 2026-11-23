@@ -61,3 +61,4 @@ Flask-Limiter==4.1.1
 psycopg[binary]==3.2.10
 python-dotenv==1.1.1
 redis==6.4.0
+reportlab==5.1.0

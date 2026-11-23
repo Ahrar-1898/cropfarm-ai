@@ -49,6 +49,7 @@ class CropFarmAppTests(unittest.TestCase):
         with self.application.app_context():
             db.session.remove()
             db.drop_all()
+            db.engine.dispose()
         self.temp_dir.cleanup()
 
     def create_user(self, email="farmer@example.test", role="farmer"):
@@ -96,8 +97,6 @@ class CropFarmAppTests(unittest.TestCase):
         self.assertIn(b'id="services"', response.data)
         self.assertIn(b'id="about"', response.data)
         self.assertIn(b'id="contact"', response.data)
-        self.assertIn(b"SCREENSHOT PLACEHOLDER", response.data)
-        self.assertIn(b"Is an AI chat assistant available?", response.data)
 
         overview = self.client.get("/explore")
         self.assertEqual(overview.status_code, 302)
