@@ -10,7 +10,15 @@
                     : hour < 21 && hour >= 17
                         ? "evening"
                         : "night";
-            dashboardGreeting.textContent = dashboardGreeting.dataset[period];
+            const greeting = dashboardGreeting.dataset[period];
+            const name = dashboardGreeting.dataset.name?.trim();
+            if (name) {
+                const punctuation = greeting.endsWith("!") ? "!" : "";
+                const baseGreeting = punctuation ? greeting.slice(0, -1) : greeting;
+                dashboardGreeting.textContent = `${baseGreeting}, ${name}${punctuation}`;
+            } else {
+                dashboardGreeting.textContent = greeting;
+            }
         };
 
         updateGreeting();

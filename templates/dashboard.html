@@ -2,7 +2,7 @@
 {% block page_title %}{{ t.dashboard_overview }} | CropFarmAI{% endblock %}
 {% block workspace_content %}
 <section class="page-heading page-heading-row">
-    <div><span class="eyebrow">{{ t.dashboard_overview }}</span><h1 id="dashboardGreeting" data-morning="{{ t.dashboard_greeting_morning }}" data-afternoon="{{ t.dashboard_greeting_afternoon }}" data-evening="{{ t.dashboard_greeting_evening }}" data-night="{{ t.dashboard_greeting_night }}" aria-live="polite"></h1><p>{{ t.dashboard_description }}</p></div>
+    <div><span class="eyebrow">{{ t.dashboard_overview }}</span><h1 id="dashboardGreeting" data-name="{{ current_user.full_name }}" data-morning="{{ t.dashboard_greeting_morning }}" data-afternoon="{{ t.dashboard_greeting_afternoon }}" data-evening="{{ t.dashboard_greeting_evening }}" data-night="{{ t.dashboard_greeting_night }}" aria-live="polite"></h1><p>{{ t.dashboard_description }}</p></div>
     <a class="button button-primary" href="{{ url_for('scanner') }}">⌕ <span>{{ t.dashboard_new_scan }}</span></a>
 </section>
 {% if not model_available %}<div class="notice notice-warning"><strong>{{ t.dashboard_model_unavailable }}</strong><span>{{ t.dashboard_model_unavailable_description }}</span></div>{% endif %}

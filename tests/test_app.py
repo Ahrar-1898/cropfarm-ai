@@ -338,7 +338,7 @@ class CropFarmAppTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Choose a crop image to analyze.", response.data)
 
-    def test_dashboard_greeting_uses_time_labels_without_user_name(self):
+    def test_dashboard_greeting_uses_time_labels_and_user_name(self):
         with self.application.app_context():
             self.create_user()
         self.sign_in()
@@ -348,7 +348,7 @@ class CropFarmAppTests(unittest.TestCase):
             b'id="dashboardGreeting"', 1
         )[1].split(b"</h1>", 1)[0]
 
-        self.assertNotIn(b"Test", greeting_markup)
+        self.assertIn(b'data-name="Test Farmer"', greeting_markup)
         for period, greeting in (
             ("morning", "Good Morning!"),
             ("afternoon", "Good Afternoon!"),
